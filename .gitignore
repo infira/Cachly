@@ -1,0 +1,6 @@
+/test/fileCache/*
+!/test/fileCache/dummy.txt
+
+/vendor/
+/test/tmp/*
+!/test/tmp/dummy.txt

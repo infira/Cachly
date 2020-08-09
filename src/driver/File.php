@@ -1,0 +1,122 @@
+<?php
+
+namespace Infira\Cachly\driver;
+
+use Infira\Utils\Fix;
+use Infira\Utils\File as Fm;
+use Infira\Utils\Dir;
+use Infira\Cachly\Cachly;
+
+class File extends \Infira\Cachly\DriverHelper
+{
+	private $path;
+	
+	public function __construct()
+	{
+		if (!Cachly::getOpt('fileConfigured'))
+		{
+			Cachly::error("File driver can't be used because its not configured. Use Cachly::configureFile");
+		}
+		$this->fallbackDriverName = Cachly::getOpt('fileFallbackDriver');
+		$this->path               = Cachly::getOpt('filePath');
+		if (!is_dir($this->path))
+		{
+			$this->fallbackORShowError("'" . $this->path . "' is not a valid path");
+		}
+		elseif (!is_writable($this->path))
+		{
+			$this->fallbackORShowError("'" . $this->path . "' is not a writable");
+		}
+		parent::__construct(Cachly::FILE);
+	}
+	
+	/**
+	 * @inheritDoc
+	 */
+	protected function doSet(string $CID, $data, int $expires = 0): bool
+	{
+		$fn = $this->getFileName($CID);
+		Fm::delete($fn);
+		Fm::put($fn, serialize($data));
+		
+		return true;
+	}
+	
+	/**
+	 * @inheritDoc
+	 */
+	protected function doExists(string $CID): bool
+	{
+		return file_exists($this->getFileName($CID));
+		
+	}
+	
+	/**
+	 * @inheritDoc
+	 */
+	protected function doGet(string $CID)
+	{
+		return unserialize(Fm::getContent($this->getFileName($CID)));
+	}
+	
+	/**
+	 * @inheritDoc
+	 */
+	protected function doDelete(string $CID): bool
+	{
+		return Fm::delete($this->getFileName($CID));
+	}
+	
+	/**
+	 * @inheritDoc
+	 */
+	protected function doGetItems(): array
+	{
+		$output = [];
+		foreach (Dir::getContents($this->path) as $f)
+		{
+			if (strpos($f, '.cache'))
+			{
+				$CID          = str_replace('.cache', '', $f);
+				$output[$CID] = $this->get($CID);
+			}
+		}
+		
+		return $output;
+	}
+	
+	/**
+	 * @inheritDoc
+	 */
+	protected function doFlush(): bool
+	{
+		return Dir::flush(Fix::dirPath($this->path));
+	}
+	
+	################ private methods
+	
+	
+	private function getFileName(string $CID): string
+	{
+		return Fix::dirPath($this->path) . "$CID.cache";
+	}
+	
+	/**
+	 * @inheritDoc
+	 */
+	protected function doGc(): bool
+	{
+		$now = time();
+		foreach ($this->doGetItems() as $CID => $v)
+		{
+			if (is_object($v) and isset($v->t) and $now > $v->t)
+			{
+				self::doDelete($CID);
+			}
+		}
+		
+		return true;
+	}
+}
+
+?>
