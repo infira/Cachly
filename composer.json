@@ -15,6 +15,6 @@
 	}
   },
   "require"    : {
-	"infira/utils": "1.2.*"
+	"infira/utils": "1.*"
   }
 }
