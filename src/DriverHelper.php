@@ -80,7 +80,12 @@ abstract class DriverHelper
 	
 	
 	/**
-	 * @inheritDoc
+	 * Save cache data
+	 *
+	 * @param string $CID
+	 * @param mixed  $data
+	 * @param int    $expires
+	 * @return bool
 	 */
 	public final function set(string $CID, $data, int $expires = 0): bool
 	{
@@ -97,7 +102,10 @@ abstract class DriverHelper
 	}
 	
 	/**
-	 * @inheritDoc
+	 * Does cache item exists
+	 *
+	 * @param string $CID
+	 * @return bool
 	 */
 	public final function exists(string $CID): bool
 	{
@@ -112,7 +120,10 @@ abstract class DriverHelper
 	}
 	
 	/**
-	 * @inheritDoc
+	 * Get cache item
+	 *
+	 * @param string $CID
+	 * @return string
 	 */
 	public final function get(string $CID)
 	{
@@ -127,7 +138,10 @@ abstract class DriverHelper
 	}
 	
 	/**
-	 * @inheritDoc
+	 * Delete cache item
+	 *
+	 * @param string $CID
+	 * @return bool
 	 */
 	public final function delete(string $CID): bool
 	{
@@ -142,7 +156,9 @@ abstract class DriverHelper
 	}
 	
 	/**
-	 * @inheritDoc
+	 * Get cache items
+	 *
+	 * @return array
 	 */
 	public final function getItems(): array
 	{
@@ -157,7 +173,7 @@ abstract class DriverHelper
 	}
 	
 	/**
-	 * @inheritDoc
+	 * debug cache items
 	 */
 	public final function debug()
 	{
@@ -165,7 +181,9 @@ abstract class DriverHelper
 	}
 	
 	/**
-	 * @inheritDoc
+	 * Flush driver
+	 *
+	 * @return bool
 	 */
 	public final function flush(): bool
 	{
@@ -180,7 +198,9 @@ abstract class DriverHelper
 	}
 	
 	/**
-	 * @inheritDoc
+	 * Garbage collector
+	 *
+	 * @return bool
 	 */
 	public final function gc(): bool
 	{
