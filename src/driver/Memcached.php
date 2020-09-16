@@ -14,7 +14,8 @@ class Memcached extends \Infira\Cachly\DriverHelper
 	
 	public function __construct()
 	{
-		if (!Cachly::getOpt('memcachedConfigured'))
+		$this->cofiguredOptName = 'memcachedConfigured';
+		if (!$this->isConfigured())
 		{
 			Cachly::error("Memcached driver can't be used because its not configured. Use Cachly::configMemcached");
 		}

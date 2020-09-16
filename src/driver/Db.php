@@ -12,7 +12,8 @@ class Db extends \Infira\Cachly\DriverHelper
 	
 	public function __construct()
 	{
-		if (!Cachly::getOpt('dbConfigured'))
+		$this->cofiguredOptName = 'dbConfigured';
+		if (!$this->isConfigured())
 		{
 			Cachly::error("Db driver can't be used because its not configured. Use Cachly::configureDb");
 		}

@@ -18,6 +18,19 @@ class Session extends \Infira\Cachly\DriverHelper
 	/**
 	 * @inheritDoc
 	 */
+	public function isConfigured(): bool
+	{
+		if (!isset($_SESSION))
+		{
+			return true;
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * @inheritDoc
+	 */
 	protected function doSet(string $CID, $data, int $expires = 0): bool
 	{
 		$_SESSION[$CID]                      = $data;

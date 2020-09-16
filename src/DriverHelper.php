@@ -7,6 +7,7 @@ use Infira\Cachly\Cachly;
 abstract class DriverHelper
 {
 	private   $driverName;
+	protected $cofiguredOptName;
 	protected $fallbackDriverName;
 	
 	/**
@@ -58,6 +59,23 @@ abstract class DriverHelper
 	public function getClient()
 	{
 		return null;
+	}
+	
+	/**
+	 * @return bool
+	 */
+	public function isConfigured(): bool
+	{
+		if (!$this->cofiguredOptName)
+		{
+			return true;
+		}
+		if (!Cachly::getOpt($this->cofiguredOptName))
+		{
+			return false;
+		}
+		
+		return true;
 	}
 	
 	

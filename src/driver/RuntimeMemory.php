@@ -15,6 +15,14 @@ class RuntimeMemory extends \Infira\Cachly\DriverHelper
 	/**
 	 * @inheritDoc
 	 */
+	public function isConfigured(): bool
+	{
+		return true;
+	}
+	
+	/**
+	 * @inheritDoc
+	 */
 	protected function doSet(string $CID, $data, int $expires = 0): bool
 	{
 		Rm::set($CID, $data);
