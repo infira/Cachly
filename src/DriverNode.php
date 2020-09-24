@@ -55,7 +55,7 @@ class DriverNode
 		}
 		else
 		{
-			Cachly::error("Unknown driver");
+			Cachly::error("Unknown driver = " . $name);
 		}
 		
 		return ClassFarm::instance("Cachly->Driver->$name", $constructor);
