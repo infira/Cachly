@@ -388,6 +388,7 @@ Cachly::sess("myInstance")->Collection("myCollection")->flush();     //flushes s
 | Name | Description |
 |------|-------------|
 |[setDefaultDriver](#setdefaultdriver)|Set default driver|
+|[getDefaultDriver](#getdefaultdriver)|Get default driver name|
 |[setHashingAlgorithm](#sethashingalgorithm)|Set default driver|
 |[configRedis](#configredis)|Configure redis driver (creates own client)|
 |[configureDb](#configuredb)|Configure database driver (creates own client)|
@@ -425,6 +426,25 @@ Set default driver
 **Return Values**
 
 `void`
+
+
+<hr />
+
+### getDefaultDriver  
+
+**Description**
+
+```php
+public static getDefaultDriver ()
+```
+
+Get default driver name 
+
+ 
+
+**Return Values**
+
+`string`
 
 
 <hr />

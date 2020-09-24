@@ -92,6 +92,21 @@ class Cachly
 		self::$DefaultDriverDefaultInstance = self::di($name, 'cachly');
 	}
 	
+	
+	public final static function getDefaultDriver(): string
+	{
+		if (!self::$Driver)
+		{
+			self::error("Cachly is not initialized use Cachly::init");
+		}
+		if (!isset(self::$options['defaultDriver']))
+		{
+			self::error("Cachly default driver is not set");
+		}
+		
+		return self::$options['defaultDriver'];
+	}
+	
 	/**
 	 * Set hashing algorithm
 	 *
