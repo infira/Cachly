@@ -9,7 +9,8 @@ class RuntimeMemory extends \Infira\Cachly\DriverHelper
 {
 	public function __construct()
 	{
-		parent::__construct(Cachly::RUNTIME_MEMORY);
+		$this->setDriver(Cachly::RUNTIME_MEMORY);
+		parent::__construct();
 	}
 	
 	/**

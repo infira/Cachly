@@ -183,11 +183,11 @@ class myAwesomeDriverActualClass extends \Infira\Cachly\DriverHelper
 {
 	public function __construct()
 	{
+        $this->setDrover('myAwesomeDriver');
 		if (errorOccurs()) //if you want on internal error you can use fallback driver
 		{
-			$this->setFallbackDriver("driver");
+			$this->setFallbackDriver(Cachly::SESS);
 		}
-		parent::__construct("myAwesomeDriver");
 	}
 	
 	/**
@@ -394,6 +394,7 @@ Cachly::sess("myInstance")->Collection("myCollection")->flush();     //flushes s
 |[configureDb](#configuredb)|Configure database driver (creates own client)|
 |[configureFile](#configurefile)|Configure file driver|
 |[configureMemcached](#configurememcached)|Configure memcached driver (creates own client)|
+|[isConfigured](#isconfigured)|Check is driver configured|
 
 ## Driver shortcuts
 |[instance](#instance)|Shortcut to default driver instance cacher|
@@ -558,6 +559,31 @@ final public static configureMemcached (array|\Memcached $memcached)
 ```
 
 Configure memcached driver 
+
+### isConfigured  
+
+**Description**
+
+```php
+public static isConfigured (string $driver)
+```
+
+Check if $driver is configured
+
+ 
+
+**Parameters**
+
+* `(string) $instance`
+
+**Return Values**
+
+`bool
+
+
+
+
+<hr />
 
  
 

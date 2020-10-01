@@ -12,7 +12,7 @@ class Db extends \Infira\Cachly\DriverHelper
 	
 	public function __construct()
 	{
-		$this->cofiguredOptName = 'dbConfigured';
+		$this->setDriver(Cachly::DB);
 		if (!$this->isConfigured())
 		{
 			Cachly::error("Db driver can't be used because its not configured. Use Cachly::configureDb");
@@ -59,7 +59,7 @@ class Db extends \Infira\Cachly\DriverHelper
 		{
 			$this->fallbackORShowError('mysqli class does not exists, make sure that mysql is installed');
 		}
-		parent::__construct(Cachly::DB);
+		parent::__construct();
 	}
 	
 	/**

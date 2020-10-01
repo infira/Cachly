@@ -222,6 +222,33 @@ class Cachly
 		self::$options                 = array_merge(self::$options, $options);
 	}
 	
+	public final static function isConfigured(string $driver): bool
+	{
+		$optName = null;
+		if ($driver == self::DB)
+		{
+			$optName = 'dbConfigured';
+		}
+		elseif ($driver == self::FILE)
+		{
+			$optName = 'fileConfigured';
+		}
+		elseif ($driver == self::MEM)
+		{
+			$optName = 'memcachedConfigured';
+		}
+		elseif ($driver == self::REDIS)
+		{
+			$optName = 'redisConfigured';
+		}
+		if ($optName)
+		{
+			return Cachly::getOpt($optName);
+		}
+		
+		return true;
+	}
+	
 	/**
 	 * Get stored option value
 	 *

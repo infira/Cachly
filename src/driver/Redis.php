@@ -13,7 +13,7 @@ class Redis extends \Infira\Cachly\DriverHelper
 	
 	public function __construct()
 	{
-		$this->cofiguredOptName = 'redisConfigured';
+		$this->setDriver(Cachly::REDIS);
 		if (!$this->isConfigured())
 		{
 			Cachly::error("Redis driver can't be used because its not configured. Use Cachly::configRedis");
@@ -67,7 +67,7 @@ class Redis extends \Infira\Cachly\DriverHelper
 		{
 			$this->fallbackORShowError('Redis class does not exists, make sure that redis is installed');
 		}
-		parent::__construct(Cachly::REDIS);
+		parent::__construct();
 	}
 	
 	/**

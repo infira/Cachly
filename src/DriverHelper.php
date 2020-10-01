@@ -7,7 +7,7 @@ use Infira\Cachly\Cachly;
 abstract class DriverHelper
 {
 	private   $driverName;
-	protected $cofiguredOptName;
+	protected $checkConfiguredViaOpt;
 	protected $fallbackDriverName;
 	
 	/**
@@ -15,13 +15,21 @@ abstract class DriverHelper
 	 */
 	protected $FallbackDriver;
 	
-	public function __construct(string $driverName)
+	public function __construct()
 	{
-		$this->driverName = $driverName;
+		if (!$this->driverName)
+		{
+			Cachly::error('Driver name is not set, use $this->setDriver');
+		}
 		if ($this->fallbackDriverName === $this->driverName)
 		{
 			Cachly::error('Fallback driver cannot be the same to self');
 		}
+	}
+	
+	protected function setDriver(string $driver)
+	{
+		$this->driverName = $driver;
 	}
 	
 	protected function fallbackORShowError(string $error)
@@ -64,18 +72,9 @@ abstract class DriverHelper
 	/**
 	 * @return bool
 	 */
-	public function isConfigured(): bool
+	protected function isConfigured(): bool
 	{
-		if (!$this->cofiguredOptName)
-		{
-			return true;
-		}
-		if (!Cachly::getOpt($this->cofiguredOptName))
-		{
-			return false;
-		}
-		
-		return true;
+		return Cachly::isConfigured($this->driverName);
 	}
 	
 	

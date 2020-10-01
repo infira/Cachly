@@ -13,7 +13,7 @@ class File extends \Infira\Cachly\DriverHelper
 	
 	public function __construct()
 	{
-		$this->cofiguredOptName = 'fileConfigured';
+		$this->setDriver(Cachly::FILE);
 		if (!$this->isConfigured())
 		{
 			Cachly::error("File driver can't be used because its not configured. Use Cachly::configureFile");
@@ -28,7 +28,7 @@ class File extends \Infira\Cachly\DriverHelper
 		{
 			$this->fallbackORShowError("'" . $this->path . "' is not a writable");
 		}
-		parent::__construct(Cachly::FILE);
+		parent::__construct();
 	}
 	
 	/**

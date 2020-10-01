@@ -8,11 +8,12 @@ class Session extends \Infira\Cachly\DriverHelper
 {
 	public function __construct()
 	{
+		$this->setDriver(Cachly::SESS);
 		if (!isset($_SESSION))
 		{
 			Cachly::error("Session driver can't be used because session is not started. Use session_start()");
 		}
-		parent::__construct(Cachly::SESS);
+		parent::__construct();
 	}
 	
 	/**
