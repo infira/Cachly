@@ -79,6 +79,36 @@ abstract class DriverHelper
 	
 	
 	/**
+	 * Check is the $data serializsable
+	 *
+	 * @param $value
+	 * @return bool
+	 */
+	private function isSerializable($value)
+	{
+		if (is_closure($value) or is_resource($value))
+		{
+			return false;
+		}
+		if (is_string($value) or is_numeric($value))
+		{
+			return true;
+		}
+		$return = true;
+		$arr    = [$value];
+		
+		array_walk_recursive($arr, function ($element) use (&$return)
+		{
+			if (is_object($element) && get_class($element) == 'Closure')
+			{
+				$return = false;
+			}
+		});
+		
+		return $return;
+	}
+	
+	/**
 	 * Save cache data
 	 *
 	 * @param string $CID
@@ -88,6 +118,11 @@ abstract class DriverHelper
 	 */
 	public final function set(string $CID, $data, int $expires = 0): bool
 	{
+		if (!$this->isSerializable($data))
+		{
+			Poesis::addExtraErrorInfo('data', $data);
+			Poesis::error('Cannot serialise cache data');
+		}
 		if ($this->FallbackDriver)
 		{
 			$this->FallbackDriver->set($CID, $data, $expires);
