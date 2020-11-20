@@ -65,15 +65,24 @@ class Cachly
 	 */
 	public final static function __callStatic($method, $args)
 	{
+		if (self::$DefaultDriverDefaultInstance === null)
+		{
+			self::error("Cachly default driver is not set, use Cachly::setDefaultDriver");
+		}
+		
 		return self::$DefaultDriverDefaultInstance->$method(...$args);
 	}
 	
 	/**
 	 * Initializes Cachly
 	 */
-	public final static function init(): void
+	public final static function init(array $options = []): void
 	{
 		self::$Driver = new DriverNode();
+		if (isset($options['defaultDriver']))
+		{
+			self::setDefaultDriver($options['defaultDriver']);
+		}
 	}
 	
 	/**

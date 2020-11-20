@@ -1,0 +1,52 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "6eedfd511e602a851267828a58539761",
+    "packages": [
+        {
+            "name": "infira/utils",
+            "version": "1.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/infira/utils.git",
+                "reference": "fbf9391f32f328795fec7784e1c17a76f7ac4b57"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/infira/utils/zipball/fbf9391f32f328795fec7784e1c17a76f7ac4b57",
+                "reference": "fbf9391f32f328795fec7784e1c17a76f7ac4b57",
+                "shasum": ""
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/__generalUtils.php"
+                ],
+                "psr-4": {
+                    "Infira\\Utils\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "authors": [
+                {
+                    "name": "gen.taliaru",
+                    "email": "gen@infira.ee"
+                }
+            ],
+            "description": "Collection of usefule server,file, date handlers and helpers",
+            "time": "2020-08-17T14:01:28+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "dev",
+    "stability-flags": [],
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": [],
+    "platform-dev": [],
+    "plugin-api-version": "1.1.0"
+}
