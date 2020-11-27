@@ -361,7 +361,7 @@ class Cachly
 	 *
 	 * @param string $driver
 	 * @param string $instance
-	 * @return object
+	 * @return Cacher
 	 */
 	public final static function di(string $driver, string $instance = 'cachly'): object
 	{

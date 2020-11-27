@@ -9,7 +9,7 @@ class Session extends \Infira\Cachly\DriverHelper
 	public function __construct()
 	{
 		$this->setDriver(Cachly::SESS);
-		if (!isset($_SESSION))
+		if (!$this->isConfigured())
 		{
 			Cachly::error("Session driver can't be used because session is not started. Use session_start()");
 		}
@@ -23,10 +23,10 @@ class Session extends \Infira\Cachly\DriverHelper
 	{
 		if (!isset($_SESSION))
 		{
-			return true;
+			return false;
 		}
 		
-		return false;
+		return true;
 	}
 	
 	/**
