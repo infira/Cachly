@@ -3,7 +3,6 @@
 namespace Infira\Cachly;
 
 use Infira\Utils\ClassFarm;
-use Infira\Poesis\Poesis;
 use Infira\Cachly\options\RedisDriverOptions;
 use Infira\Cachly\options\MemcachedDriverOptions;
 use Infira\Cachly\options\DbDriverOptions;
@@ -143,7 +142,7 @@ class Cachly
 	 * Configure redis driver
 	 *
 	 * @param RedisDriverOptions $options
-	 * @throws \Infira\Poesis\Error
+	 * @throws \Error
 	 * @see https://github.com/phpredis/phpredis
 	 */
 	public final static function configRedis(RedisDriverOptions &$options)
@@ -182,7 +181,7 @@ class Cachly
 	 * Configure database driver
 	 *
 	 * @param DbDriverOptions $options
-	 * @throws \Infira\Poesis\Error
+	 * @throws \Error
 	 * @see https://www.php.net/manual/en/book.mysqli.php
 	 */
 	public final static function configureDb(DbDriverOptions $options)
