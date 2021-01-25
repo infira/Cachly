@@ -3,6 +3,7 @@
 namespace Infira\Cachly;
 
 use Infira\Utils\ClassFarm;
+use Infira\Poesis\Poesis;
 
 
 /**
@@ -35,7 +36,7 @@ use Infira\Utils\ClassFarm;
  */
 class Cachly
 {
-	public static $options = ['defaultDriver' => 'sess', 'redisConfigured' => false, 'redisClient' => null, 'memcachedConfigured' => false, 'memcachedClient' => null, 'dbConfigured' => false, 'dbClient' => null, 'fileConfigured' => false];
+	public static $options = ['defaultDriver' => 'sess', 'redisOptions' => null, 'redisClient' => null, 'memcachedOptions' => false, 'memcachedClient' => null, 'dbOptions' => null, 'dbClient' => null, 'fileConfigured' => false];
 	
 	/**
 	 * @var DriverNode
@@ -135,39 +136,46 @@ class Cachly
 	/**
 	 * Configure redis driver
 	 *
-	 * @param array|\Redis $redis - \Redis class or options array ['password'=>'', 'host'=>'localhost', 'port'=>6379, 'afterConnect'=>null|callable, 'fallbackDriver'=>null|string]
+	 * @param RedisDriverOptions $options
+	 * @throws \Infira\Poesis\Error
 	 * @see https://github.com/phpredis/phpredis
 	 */
-	public final static function configRedis($redis)
+	public final static function configRedis(RedisDriverOptions $options)
 	{
-		$options                    = [];
-		$options['redisConfigured'] = true;
-		if (is_object($redis) and $redis instanceof \Redis)
+		if ($options === null)
 		{
-			$options['redisClient'] = &$redis;
-			self::$options          = array_merge(self::$options, $options);
+			$options = new DbDriverOptions();
 		}
-		else
+		if ($options->client === null and $options->host)
 		{
-			$defaultOptions                 = array_merge(['password' => '', 'host' => 'localhost', 'port' => 6379, 'afterConnect' => null, 'fallbackDriver' => null], $redis);
-			$options['redisHost']           = $defaultOptions['host'];
-			$options['redisPort']           = intval($defaultOptions['port']);
-			$options['redisPassword']       = $defaultOptions['password'];
-			$options['redisFallbackDriver'] = (is_string($defaultOptions['fallbackDriver'])) ? $defaultOptions['fallbackDriver'] : null;
-			$options['redisAfterConnect']   = (is_callable($defaultOptions['afterConnect'])) ? $defaultOptions['afterConnect'] : null;
-			self::$options                  = array_merge(self::$options, $options);
+			Poesis::error('Fill client property with Redis object or (user,host,port) properties to make inner mysql connection');
 		}
+		self::$options['redisOptions'] = $options;
 	}
 	
 	/**
 	 * Configure memcached driver
 	 *
-	 * @param array|\Memcached $memcached - \Memcached class or options array ['host'=>'localhost', 'port'=>11211, 'afterConnect'=>null|callable, 'fallbackDriver'=>null|string]
+	 * @param MemcachedDriverOptions $options
 	 * @see https://www.php.net/manual/en/book.memcached.php
 	 */
-	public final static function configureMemcached($memcached)
+	public final static function configureMemcached(MemcachedDriverOptions $options)
 	{
-		$options = ['memcachedConfigured' => true];
+		if ($options === null)
+		{
+			$options = new DbDriverOptions();
+		}
+		if ($options->client === null and $options->host)
+		{
+			Poesis::error('Fill client property with Memcached object or (host,port) properties to make inner mysql connection');
+		}
+		self::$options['memcachedOptions'] = $options;
+		
+		
+		$options                            = [];
+		$options['memcachedOptions']     = true;
+		$options['memcachedFallbackDriver'] = null;
+		$options['memcachedAfterConnect']   = null;
 		if (is_object($memcached) and $memcached instanceof \Memcached)
 		{
 			$options                    = [];
@@ -176,44 +184,39 @@ class Cachly
 		}
 		else
 		{
-			$defaultOptions                     = array_merge(['host' => 'localhost', 'port' => 11211, 'afterConnect' => null, 'fallbackDriver' => null], $memcached);
-			$options['memcachedHost']           = $defaultOptions['host'];
-			$options['memcachedPort']           = intval($defaultOptions['port']);
-			$options['memcachedFallbackDriver'] = (is_string($defaultOptions['fallbackDriver'])) ? $defaultOptions['fallbackDriver'] : null;
-			$options['memcachedAfterConnect']   = (is_callable($defaultOptions['afterConnect'])) ? $defaultOptions['afterConnect'] : null;
-			self::$options                      = array_merge(self::$options, $options);
+			$userOptions              = array_merge(['host' => 'localhost', 'port' => 11211, 'afterConnect' => null, 'fallbackDriver' => null], $memcached);
+			$options['memcachedHost'] = $userOptions['host'];
+			$options['memcachedPort'] = intval($userOptions['port']);
+			if (is_string($userOptions['fallbackDriver']))
+			{
+				$options['memcachedFallbackDriver'] = $userOptions['dbFallbackDriver'];
+			}
+			if (is_callable($userOptions['afterConnect']))
+			{
+				$options['memcachedAfterConnect'] = $userOptions['afterConnect'];
+			}
+			self::$options = array_merge(self::$options, $options);
 		}
 	}
 	
 	/**
 	 * Configure database driver
 	 *
-	 * @param array|\mysqli $db - \mysqli class or options array ['user'=>'', 'password'=>'', 'host'=>'localhost', 'port'=>'ini_get("mysqli.default_port")', 'db'=>'myDbName', 'table'=>'cachly_data', 'afterConnect'=>null|callable, 'fallbackDriver'=>null|string] <br />
-	 *                          Leave port empty to use system configured mysql port (ini_get("mysqli.default_port"))
+	 * @param DbDriverOptions $options
+	 * @throws \Infira\Poesis\Error
 	 * @see https://www.php.net/manual/en/book.mysqli.php
 	 */
-	public final static function configureDb($db)
+	public final static function configureDb(DbDriverOptions $options)
 	{
-		$options = ['dbConfigured' => true];
-		if (is_object($db) and $db instanceof \mysqli)
+		if ($options === null)
 		{
-			$options['dbClient']       = &$db;
-			$options['dbAfterConnect'] = null;
-			self::$options             = array_merge(self::$options, $options);
+			$options = new DbDriverOptions();
 		}
-		else
+		if ($options->client === null and $options->host)
 		{
-			$defaultOptions              = array_merge(['user' => '', 'password' => '', 'host' => 'localhost', 'port' => '', 'db' => 'myDbName', 'table' => 'cachly_data', 'afterConnect' => null, 'fallbackDriver' => null], $db);
-			$options['dbHost']           = $defaultOptions['host'];
-			$options['dbPort']           = intval($defaultOptions['port']);
-			$options['dbUser']           = $defaultOptions['user'];
-			$options['dbPass']           = $defaultOptions['password'];
-			$options['dbDatabase']       = $defaultOptions['db'];
-			$options['dbTable']          = $defaultOptions['table'];
-			$options['dbFallbackDriver'] = (is_string($defaultOptions['fallbackDriver'])) ? $defaultOptions['fallbackDriver'] : null;
-			$options['dbAfterConnect']   = (is_callable($defaultOptions['afterConnect'])) ? $defaultOptions['afterConnect'] : null;
-			self::$options               = array_merge(self::$options, $options);
+			Poesis::error('Fill client property with mysqli object or (user,password,host,port) properties to make inner mysql connection');
 		}
+		self::$options['dbOptions'] = $options;
 	}
 	
 	/**
@@ -236,7 +239,7 @@ class Cachly
 		$optName = null;
 		if ($driver == self::DB)
 		{
-			$optName = 'dbConfigured';
+			$optName = 'dbOptions';
 		}
 		elseif ($driver == self::FILE)
 		{
@@ -244,18 +247,14 @@ class Cachly
 		}
 		elseif ($driver == self::MEM)
 		{
-			$optName = 'memcachedConfigured';
+			$optName = 'memcachedOptions';
 		}
 		elseif ($driver == self::REDIS)
 		{
-			$optName = 'redisConfigured';
-		}
-		if ($optName)
-		{
-			return Cachly::getOpt($optName);
+			$optName = 'redisOptions';
 		}
 		
-		return true;
+		return Cachly::getOpt($optName) !== null;
 	}
 	
 	/**
@@ -398,3 +397,5 @@ class Cachly
 		return $hash;
 	}
 }
+
+?>

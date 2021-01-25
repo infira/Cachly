@@ -3,6 +3,7 @@
 namespace Infira\Cachly\driver;
 
 use Infira\Cachly\Cachly;
+use Infira\Cachly\RedisDriverOptions;
 
 class Redis extends \Infira\Cachly\DriverHelper
 {
@@ -11,6 +12,11 @@ class Redis extends \Infira\Cachly\DriverHelper
 	 */
 	private $Redis;
 	
+	/**
+	 * @var RedisDriverOptions
+	 */
+	private $Options;
+	
 	public function __construct()
 	{
 		$this->setDriver(Cachly::REDIS);
@@ -18,25 +24,19 @@ class Redis extends \Infira\Cachly\DriverHelper
 		{
 			Cachly::error("Redis driver can't be used because its not configured. Use Cachly::configRedis");
 		}
-		$this->fallbackDriverName = Cachly::getOpt('redisFallbackDriver');
-		if (Cachly::getOpt('redisClient'))
-		{
-			$this->Redis = Cachly::getOpt('redisClient');
-			if (!is_object($this->Redis))
-			{
-				Cachly::error("client must be object");
-			}
-			if (!$this->Redis instanceof \Redis)
-			{
-				Cachly::error("client must be Redis class");
-			}
-		}
-		elseif (class_exists("Redis"))
+		$this->Options            = Cachly::getOpt('redisOptions');
+		$this->fallbackDriverName = $this->Options->fallbackDriver;
+		
+		if ($this->Options->client === null)
 		{
 			try
 			{
+				if (!class_exists("Redis"))
+				{
+					$this->fallbackORShowError('Redis class does not exists, make sure that redis is installed');
+				}
 				$this->Redis = new \Redis();
-				$connect     = $this->Redis->pconnect(Cachly::getOpt('redisHost'), Cachly::getOpt('redisPort'));
+				$connect     = $this->Redis->pconnect($this->Options->host, $this->Options->port);
 				if (!$connect)
 				{
 					$this->fallbackORShowError("Redis connection failed");
@@ -44,16 +44,16 @@ class Redis extends \Infira\Cachly\DriverHelper
 				else
 				{
 					$this->Redis->setOption(\Redis::OPT_SERIALIZER, \Redis::SERIALIZER_PHP);
-					if (!$this->Redis->auth(Cachly::getOpt('redisPassword')) and Cachly::getOpt('redisPassword'))
+					if (!$this->Redis->auth($this->Options->password))
 					{
 						$this->fallbackORShowError("Redis connection authentication failed");
 					}
 					else
 					{
-						if (is_callable(Cachly::getOpt('redisAfterConnect')))
+						if (is_callable($this->Options->afterConnect))
 						{
-							$f = Cachly::getOpt('redisAfterConnect');
-							$f->call($this->Redis);
+							$f = $this->Options->afterConnect;
+							callback($f, null, [$this->Redis]);
 						}
 					}
 				}
@@ -62,10 +62,19 @@ class Redis extends \Infira\Cachly\DriverHelper
 			{
 				$this->fallbackORShowError($exception->getMessage());
 			}
+			
 		}
 		else
 		{
-			$this->fallbackORShowError('Redis class does not exists, make sure that redis is installed');
+			$this->Redis = $this->Options->client;
+			if (!is_object($this->Redis))
+			{
+				$this->fallbackORShowError("client must be object");
+			}
+			if (!$this->Redis instanceof \Redis)
+			{
+				$this->fallbackORShowError("client must be Redis class");
+			}
 		}
 		parent::__construct();
 	}

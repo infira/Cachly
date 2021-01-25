@@ -3,6 +3,7 @@
 namespace Infira\Cachly\driver;
 
 use Infira\Cachly\Cachly;
+use Infira\Cachly\MemcachedDriverOptions;
 
 class Memcached extends \Infira\Cachly\DriverHelper
 {
@@ -11,6 +12,10 @@ class Memcached extends \Infira\Cachly\DriverHelper
 	 */
 	public $Memcached;
 	
+	/**
+	 * @var MemcachedDriverOptions
+	 */
+	private $Options;
 	
 	public function __construct()
 	{
@@ -20,21 +25,15 @@ class Memcached extends \Infira\Cachly\DriverHelper
 			Cachly::error("Memcached driver can't be used because its not configured. Use Cachly::configMemcached");
 		}
 		
-		$this->fallbackDriverName = Cachly::getOpt('memcachedFallbackDriver');
-		if (Cachly::getOpt('memcachedClient'))
+		$this->Options            = Cachly::getOpt('redisOptions');
+		$this->fallbackDriverName = $this->Options->fallbackDriver;
+		
+		if ($this->Options->client === null)
 		{
-			$this->Memcached = Cachly::getOpt('memcachedClient');
-			if (!is_object($this->Memcached))
+			if (!class_exists('Memcached'))
 			{
-				Cachly::error("client must be object");
+				$this->fallbackORShowError('Memcached class does not exists, make sure that memcached is installed');
 			}
-			if (!$this->Memcached instanceof \Memcached)
-			{
-				Cachly::error("client must be Memcached class");
-			}
-		}
-		elseif (class_exists("Memcached"))
-		{
 			$this->Memcached = new \Memcached();
 			$connect         = $this->Memcached->addServer(Cachly::getOpt('memcachedHost'), intval(Cachly::getOpt('memcachedPort')));
 			$ok              = true;
@@ -48,15 +47,22 @@ class Memcached extends \Infira\Cachly\DriverHelper
 				$this->fallbackORShowError('Memcached connection failed');
 				$ok = false;
 			}
-			if (is_callable(Cachly::getOpt('memcachedAfterConnect')) and $ok)
+			if (is_callable($this->Options->afterConnect) and $ok)
 			{
-				$f = Cachly::getOpt('memcachedAfterConnect');
-				$f->call($this->Memcached);
+				callback($this->Options->afterConnect, null, [$this->Memcached]);
 			}
 		}
 		else
 		{
-			$this->fallbackORShowError('Memcached class does not exists, make sure that memcached is installed');
+			$this->Memcached = $this->Options->client;
+			if (!is_object($this->Memcached))
+			{
+				Cachly::error("client must be object");
+			}
+			if (!$this->Memcached instanceof \Memcached)
+			{
+				Cachly::error("client must be Memcached class");
+			}
 		}
 		parent::__construct();
 	}

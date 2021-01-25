@@ -3,12 +3,18 @@
 namespace Infira\Cachly\driver;
 
 use Infira\Cachly\Cachly;
+use Infira\Cachly\DbDriverOptions;
 
 class Db extends \Infira\Cachly\DriverHelper
 {
 	private $mysqli;
 	
 	private $tableName;
+	
+	/**
+	 * @var DbDriverOptions
+	 */
+	private $Options;
 	
 	public function __construct()
 	{
@@ -17,29 +23,23 @@ class Db extends \Infira\Cachly\DriverHelper
 		{
 			Cachly::error("Db driver can't be used because its not configured. Use Cachly::configureDb");
 		}
-		$this->fallbackDriverName = Cachly::getOpt('dbFallbackDriver');
-		if (Cachly::getOpt('dbClient'))
+		$this->Options            = Cachly::getOpt('dbOptions');
+		$this->fallbackDriverName = $this->Options->fallbackDriver;
+		
+		if ($this->Options->client == null)
 		{
-			$this->mysqli = Cachly::getOpt('dbClient');
-			if (!is_object($this->mysqli))
+			if (!class_exists("mysqli"))
 			{
-				Cachly::error("client must be object");
+				$this->fallbackORShowError('mysqli class does not exists, make sure that mysql is installed');
 			}
-			if (!$this->mysqli instanceof \mysqli)
+			$dbName = $this->Options->db;
+			if ($this->Options->port > 0)
 			{
-				Cachly::error("client must be mysqli class");
-			}
-		}
-		elseif (class_exists("mysqli"))
-		{
-			$dbName = Cachly::getOpt('dbDatabase');
-			if (Cachly::getOpt("dbPort") > 0)
-			{
-				@$this->mysqli = new \mysqli(Cachly::getOpt('dbHost'), Cachly::getOpt('dbUser'), Cachly::getOpt('dbPass'), $dbName, Cachly::getOpt("dbPort"));
+				@$this->mysqli = new \mysqli($this->Options->host, $this->Options->user, $this->Options->password, $dbName, $this->Options->port);
 			}
 			else
 			{
-				@$this->mysqli = new \mysqli(Cachly::getOpt('dbHost'), Cachly::getOpt('dbUser'), Cachly::getOpt('dbPass'), $dbName);
+				@$this->mysqli = new \mysqli($this->Options->host, $this->Options->user, $this->Options->password, $dbName);
 			}
 			if ($this->mysqli->connect_errno)
 			{
@@ -47,18 +47,25 @@ class Db extends \Infira\Cachly\DriverHelper
 			}
 			else
 			{
-				$this->tableName = '`' . $this->mysqli->escape_string($dbName) . '`.`' . $this->mysqli->escape_string(Cachly::getOpt('dbTable')) . '`';
-				if (is_callable(Cachly::getOpt('dbAfterConnect')))
+				if (is_callable($this->Options->afterConnect))
 				{
-					$f = Cachly::getOpt('dbAfterConnect');
-					$f->call($this->mysqli);
+					callback($this->Options->afterConnect, null, [$this->mysqli]);
 				}
 			}
 		}
 		else
 		{
-			$this->fallbackORShowError('mysqli class does not exists, make sure that mysql is installed');
+			$this->mysqli = $this->Options->client;
+			if (!is_object($this->mysqli))
+			{
+				$this->fallbackORShowError("client must be object");
+			}
+			if (!$this->mysqli instanceof \mysqli)
+			{
+				$this->fallbackORShowError("client must be mysqli class");
+			}
 		}
+		$this->tableName = '`' . $this->mysqli->escape_string($this->Options->table) . '`';
 		parent::__construct();
 	}
 	
@@ -77,7 +84,16 @@ class Db extends \Infira\Cachly\DriverHelper
 	 */
 	protected function doSet(string $CID, $data, int $expires = 0): bool
 	{
-		return $this->execute('REPLACE into %tableName% (ID,data,expires) VALUES(%ID%,%data%,%expires%)', ['ID' => $CID, 'data' => $data, 'expires' => date('Y-m-d H:i:s', $expires)]) ? true : false;
+		if ($expires == 0)
+		{
+			$expires = null;
+		}
+		else
+		{
+			$expires = date('Y-m-d H:i:s', $expires);
+		}
+		
+		return $this->execute('REPLACE INTO %tableName% (ID,DATA,expires) VALUES(%ID%,%data%,%expires%)', ['ID' => $CID, 'data' => $data, 'expires' => $expires]) ? true : false;
 	}
 	
 	/**
@@ -157,7 +173,7 @@ class Db extends \Infira\Cachly\DriverHelper
 	 */
 	protected function doGc(): bool
 	{
-		return $this->execute('DELETE FROM %tableName% WHERE expires < time()');
+		return $this->execute('DELETE FROM %tableName% WHERE expires < TIME() AND expires IS NOT NULL');
 	}
 	
 	################ private methods
@@ -174,8 +190,15 @@ class Db extends \Infira\Cachly\DriverHelper
 		}
 		foreach ($data as $key => $val)
 		{
-			$val   = $this->mysqli->real_escape_string($val);
-			$query = str_replace("%$key%", "'$val'", $query);
+			if ($key == 'expires' and $val === null)
+			{
+				$query = str_replace("%$key%", 'NULL', $query);
+			}
+			else
+			{
+				$val   = $this->mysqli->real_escape_string($val);
+				$query = str_replace("%$key%", "'$val'", $query);
+			}
 		}
 		$query = str_replace("%tableName%", $this->tableName, $query);
 		$res   = $this->mysqli->query($query);
