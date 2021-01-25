@@ -10,6 +10,7 @@
   ],
   "autoload"         : {
 	"psr-4": {
+	  "Infira\\Cachly\\options\\": "src/options",
 	  "Infira\\Cachly\\driver\\": "src/driver",
 	  "Infira\\Cachly\\"        : "src/"
 	}
