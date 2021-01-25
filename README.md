@@ -45,26 +45,8 @@ Add the library to your `composer.json` file in your project:
 
 ```javascript
 {
-	"require"
-:
-	{
-		"infira/cachly"
-	:
-		"*"
-	}
-}
-```
-
-if u want to use latest and greatest
-
-```javascript
-{
-	"require"
-:
-	{
-		"infira/cachly"
-	:
-		"dev-master"
+	"require": {
+		"infira/cachly": "dev-master"
 	}
 }
 ```
