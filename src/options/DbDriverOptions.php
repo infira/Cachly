@@ -19,5 +19,5 @@ class DbDriverOptions
 	public $user     = null;
 	public $password = null;
 	public $db       = null;
-	public $port     = null; //null = default port will be used
+	public $port     = 3306; //null = default port will be used
 }
