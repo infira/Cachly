@@ -6,10 +6,16 @@ use Infira\Utils\Fix;
 use Infira\Utils\File as Fm;
 use Infira\Utils\Dir;
 use Infira\Cachly\Cachly;
+use Infira\Cachly\options\FileDriverOptions;
 
 class File extends \Infira\Cachly\DriverHelper
 {
 	private $path;
+	
+	/**
+	 * @var FileDriverOptions
+	 */
+	private $Options;
 	
 	public function __construct()
 	{
@@ -18,8 +24,10 @@ class File extends \Infira\Cachly\DriverHelper
 		{
 			Cachly::error("File driver can't be used because its not configured. Use Cachly::configureFile");
 		}
-		$this->fallbackDriverName = Cachly::getOpt('fileFallbackDriver');
-		$this->path               = Cachly::getOpt('filePath');
+		$this->Options            = Cachly::getOpt('fileOptions');
+		$this->fallbackDriverName = $this->Options->fallbackDriver;
+		$this->path               = $this->Options->cachePath;
+		
 		if (!is_dir($this->path))
 		{
 			$this->fallbackORShowError("'" . $this->path . "' is not a valid path");

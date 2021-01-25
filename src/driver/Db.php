@@ -3,7 +3,7 @@
 namespace Infira\Cachly\driver;
 
 use Infira\Cachly\Cachly;
-use Infira\Cachly\DbDriverOptions;
+use Infira\Cachly\options\DbDriverOptions;
 
 class Db extends \Infira\Cachly\DriverHelper
 {
@@ -33,13 +33,13 @@ class Db extends \Infira\Cachly\DriverHelper
 				$this->fallbackORShowError('mysqli class does not exists, make sure that mysql is installed');
 			}
 			$dbName = $this->Options->db;
-			if ($this->Options->port > 0)
+			if ($this->Options->port !== null)
 			{
-				@$this->mysqli = new \mysqli($this->Options->host, $this->Options->user, $this->Options->password, $dbName, $this->Options->port);
+				$this->mysqli = new \mysqli($this->Options->host, $this->Options->user, $this->Options->password, $dbName, $this->Options->port);
 			}
 			else
 			{
-				@$this->mysqli = new \mysqli($this->Options->host, $this->Options->user, $this->Options->password, $dbName);
+				$this->mysqli = new \mysqli($this->Options->host, $this->Options->user, $this->Options->password, $dbName);
 			}
 			if ($this->mysqli->connect_errno)
 			{

@@ -27,6 +27,10 @@ else
 
 use Infira\Cachly\Cachly;
 use Infira\Utils\Http;
+use Infira\Cachly\options\MemcachedDriverOptions;
+use Infira\Cachly\options\RedisDriverOptions;
+use Infira\Cachly\options\DbDriverOptions;
+use Infira\Cachly\options\FileDriverOptions;
 
 error_reporting(E_ALL);
 require "../src/driver/RuntimeMemory.php";
@@ -45,10 +49,22 @@ function convert($size)
 }
 
 Sess::init();
-Cachly::configRedis(['host' => 'localhost', 'port' => 11211, 'fallbackDriver' => Cachly::SESS]);
-Cachly::configureMemcached(['host' => 'localhost', 'port' => 11211, 'fallbackDriver' => Cachly::SESS]);
-Cachly::configureDb(['user' => 'vagrant', 'password' => 'parool', 'db' => 'kis', 'table' => 'cachly_cache', 'host' => 'localhost', 'afterConnect' => null, 'fallbackDriver' => Cachly::SESS]);
-Cachly::configureFile(__DIR__ . '/fileCache', null);
+$redisOptions = new RedisDriverOptions();
+Cachly::configRedis($redisOptions);
+
+$memcachedOptions = new MemcachedDriverOptions();
+Cachly::configureMemcached($memcachedOptions);
+
+$dbOptions           = new DbDriverOptions();
+$dbOptions->user     = 'vagrant';
+$dbOptions->password = 'parool';
+$dbOptions->db       = 'klavis_kis';
+$dbOptions->table    = 'cachly_cache';
+Cachly::configureDb($dbOptions);
+
+$fileOptions            = new FileDriverOptions();
+$fileOptions->cachePath = __DIR__ . '/fileCache';
+Cachly::configureFile($fileOptions);
 
 
 $drivers = [Cachly::DB, Cachly::FILE, Cachly::MEM, Cachly::REDIS, Cachly::RUNTIME_MEMORY, Cachly::SESS];

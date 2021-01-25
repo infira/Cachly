@@ -3,7 +3,7 @@
 namespace Infira\Cachly\driver;
 
 use Infira\Cachly\Cachly;
-use Infira\Cachly\RedisDriverOptions;
+use Infira\Cachly\options\RedisDriverOptions;
 
 class Redis extends \Infira\Cachly\DriverHelper
 {

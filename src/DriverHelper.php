@@ -77,7 +77,6 @@ abstract class DriverHelper
 		return Cachly::isConfigured($this->driverName);
 	}
 	
-	
 	/**
 	 * Check is the $data serializsable
 	 *
@@ -120,8 +119,8 @@ abstract class DriverHelper
 	{
 		if (!$this->isSerializable($data))
 		{
-			Poesis::addExtraErrorInfo('data', $data);
-			Poesis::error('Cannot serialise cache data');
+			Cachly::addExtraErrorInfo('data', $data);
+			Cachly::error('Cannot serialise cache data');
 		}
 		if ($this->FallbackDriver)
 		{

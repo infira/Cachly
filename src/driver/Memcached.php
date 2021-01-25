@@ -3,7 +3,7 @@
 namespace Infira\Cachly\driver;
 
 use Infira\Cachly\Cachly;
-use Infira\Cachly\MemcachedDriverOptions;
+use Infira\Cachly\options\MemcachedDriverOptions;
 
 class Memcached extends \Infira\Cachly\DriverHelper
 {
@@ -35,7 +35,7 @@ class Memcached extends \Infira\Cachly\DriverHelper
 				$this->fallbackORShowError('Memcached class does not exists, make sure that memcached is installed');
 			}
 			$this->Memcached = new \Memcached();
-			$connect         = $this->Memcached->addServer(Cachly::getOpt('memcachedHost'), intval(Cachly::getOpt('memcachedPort')));
+			$connect         = $this->Memcached->addServer($this->Options->host, intval($this->Options->port));
 			$ok              = true;
 			if ($this->Memcached->getStats() === false)
 			{

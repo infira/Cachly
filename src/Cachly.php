@@ -4,6 +4,10 @@ namespace Infira\Cachly;
 
 use Infira\Utils\ClassFarm;
 use Infira\Poesis\Poesis;
+use Infira\Cachly\options\RedisDriverOptions;
+use Infira\Cachly\options\MemcachedDriverOptions;
+use Infira\Cachly\options\DbDriverOptions;
+use Infira\Cachly\options\FileDriverOptions;
 
 
 /**
@@ -36,7 +40,7 @@ use Infira\Poesis\Poesis;
  */
 class Cachly
 {
-	public static $options = ['defaultDriver' => 'sess', 'redisOptions' => null, 'redisClient' => null, 'memcachedOptions' => false, 'memcachedClient' => null, 'dbOptions' => null, 'dbClient' => null, 'fileConfigured' => false];
+	public static $options = ['defaultDriver' => 'sess', 'redisOptions' => null, 'memcachedOptions' => null, 'dbOptions' => null, 'fileOptions' => null];
 	
 	/**
 	 * @var DriverNode
@@ -76,6 +80,8 @@ class Cachly
 	
 	/**
 	 * Initializes Cachly
+	 *
+	 * @param array $options
 	 */
 	public final static function init(array $options = []): void
 	{
@@ -140,15 +146,15 @@ class Cachly
 	 * @throws \Infira\Poesis\Error
 	 * @see https://github.com/phpredis/phpredis
 	 */
-	public final static function configRedis(RedisDriverOptions $options)
+	public final static function configRedis(RedisDriverOptions &$options)
 	{
 		if ($options === null)
 		{
-			$options = new DbDriverOptions();
+			$options = new RedisDriverOptions();
 		}
-		if ($options->client === null and $options->host)
+		if ($options->client === null and !$options->host)
 		{
-			Poesis::error('Fill client property with Redis object or (user,host,port) properties to make inner mysql connection');
+			self::error('Fill client property with Redis object or (user,host,port) properties to make inner mysql connection');
 		}
 		self::$options['redisOptions'] = $options;
 	}
@@ -163,40 +169,13 @@ class Cachly
 	{
 		if ($options === null)
 		{
-			$options = new DbDriverOptions();
+			$options = new MemcachedDriverOptions();
 		}
-		if ($options->client === null and $options->host)
+		if ($options->client === null and !$options->host)
 		{
-			Poesis::error('Fill client property with Memcached object or (host,port) properties to make inner mysql connection');
+			self::error('Fill client property with Memcached object or (host,port) properties to make inner mysql connection');
 		}
 		self::$options['memcachedOptions'] = $options;
-		
-		
-		$options                            = [];
-		$options['memcachedOptions']     = true;
-		$options['memcachedFallbackDriver'] = null;
-		$options['memcachedAfterConnect']   = null;
-		if (is_object($memcached) and $memcached instanceof \Memcached)
-		{
-			$options                    = [];
-			$options['memcachedClient'] = &$memcached;
-			self::$options              = array_merge(self::$options, $options);
-		}
-		else
-		{
-			$userOptions              = array_merge(['host' => 'localhost', 'port' => 11211, 'afterConnect' => null, 'fallbackDriver' => null], $memcached);
-			$options['memcachedHost'] = $userOptions['host'];
-			$options['memcachedPort'] = intval($userOptions['port']);
-			if (is_string($userOptions['fallbackDriver']))
-			{
-				$options['memcachedFallbackDriver'] = $userOptions['dbFallbackDriver'];
-			}
-			if (is_callable($userOptions['afterConnect']))
-			{
-				$options['memcachedAfterConnect'] = $userOptions['afterConnect'];
-			}
-			self::$options = array_merge(self::$options, $options);
-		}
 	}
 	
 	/**
@@ -212,9 +191,9 @@ class Cachly
 		{
 			$options = new DbDriverOptions();
 		}
-		if ($options->client === null and $options->host)
+		if ($options->client === null and !$options->host)
 		{
-			Poesis::error('Fill client property with mysqli object or (user,password,host,port) properties to make inner mysql connection');
+			self::error('Fill client property with mysqli object or (user,password,host,port) properties to make inner mysql connection');
 		}
 		self::$options['dbOptions'] = $options;
 	}
@@ -222,16 +201,15 @@ class Cachly
 	/**
 	 * Configure file driver
 	 *
-	 * @param string $path
-	 * @param string $fallbackDriver - in case of redis connection error use fallback driver
+	 * @param FileDriverOptions $options
 	 */
-	public final static function configureFile(string $path = '', $fallbackDriver = null)
+	public final static function configureFile(FileDriverOptions $options)
 	{
-		$options                       = [];
-		$options['fileConfigured']     = true;
-		$options['filePath']           = $path;
-		$options['fileFallbackDriver'] = (is_string($fallbackDriver)) ? $fallbackDriver : null;
-		self::$options                 = array_merge(self::$options, $options);
+		if ($options === null)
+		{
+			$options = new FileDriverOptions();
+		}
+		self::$options['fileOptions'] = $options;
 	}
 	
 	public final static function isConfigured(string $driver): bool
@@ -243,7 +221,7 @@ class Cachly
 		}
 		elseif ($driver == self::FILE)
 		{
-			$optName = 'fileConfigured';
+			$optName = 'fileOptions';
 		}
 		elseif ($driver == self::MEM)
 		{
