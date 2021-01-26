@@ -39,7 +39,7 @@ use Infira\Cachly\options\FileDriverOptions;
  */
 class Cachly
 {
-	public static $options = ['defaultDriver' => 'sess', 'redisOptions' => null, 'memcachedOptions' => null, 'dbOptions' => null, 'fileOptions' => null];
+	public static $options = ['defaultDriver' => 'sess', 'redisOptions' => null, 'memcachedOptions' => null, 'dbOptions' => null, 'fileOptions' => null, 'keyPrefix' => 'production'];
 	
 	/**
 	 * @var DriverNode
@@ -105,6 +105,18 @@ class Cachly
 		}
 		self::$options['defaultDriver']     = $name;
 		self::$DefaultDriverDefaultInstance = self::di($name, 'cachly');
+	}
+	
+	/**
+	 * Set custom cache key prefix
+	 * Cache keys are generated as follows  $yourCachePrefix . ";" .$_SERVER['HTTP_HOST'] . ";" . $_SERVER['DOCUMENT_ROOT'] . ";" . $this->driverName . $this->instanceName . $valueKey
+	 * Defaults to production
+	 *
+	 * @param string $prefix
+	 */
+	public static function setCacheKeyPrefix(string $prefix)
+	{
+		self::$options['keyPrefix'] = $prefix;
 	}
 	
 	

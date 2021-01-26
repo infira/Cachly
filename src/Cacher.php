@@ -679,7 +679,7 @@ class Cacher
 		{
 			Cachly::error("Cache key cannot be empty");
 		}
-		$hashKey = $_SERVER['HTTP_HOST'] . ";" . $_SERVER['DOCUMENT_ROOT'] . ";" . $this->driverName . $this->instanceName . $key;
+		$hashKey = Cachly::getOpt('keyPrefix') . ';' . $_SERVER['HTTP_HOST'] . ";" . $_SERVER['DOCUMENT_ROOT'] . ";" . $this->driverName . $this->instanceName . $key;
 		
 		return Cachly::hash($hashKey);
 	}

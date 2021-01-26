@@ -75,7 +75,13 @@ use Infira\Cachly\Cachly;
 
 Cachly::init();
 Cachly::setDefaultDriver(Cachly::REDIS);
+/**
+* Cache keys are generated as follows  $yourCachePrefix . ";" .$_SERVER['HTTP_HOST'] . ";" . $_SERVER['DOCUMENT_ROOT'] . ";" . $this->driverName . $this->instanceName . $valueKey
+*/
+Cachly::setPreix('myCystomCacheKeyPrefix'); //defaults to 'production'
 ```
+
+
 
 ### Configure redis driver
 
