@@ -4,20 +4,65 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6eedfd511e602a851267828a58539761",
+    "content-hash": "87f778800965baa8ecb5149a4fd3d0fe",
     "packages": [
         {
-            "name": "infira/utils",
-            "version": "1.4",
+            "name": "infira/errorhandler",
+            "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/infira/utils.git",
-                "reference": "fbf9391f32f328795fec7784e1c17a76f7ac4b57"
+                "url": "https://github.com/infira/ErrorHandler.git",
+                "reference": "8ed80e45074708f2a3401c6b140037e57e40d926"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/infira/utils/zipball/fbf9391f32f328795fec7784e1c17a76f7ac4b57",
-                "reference": "fbf9391f32f328795fec7784e1c17a76f7ac4b57",
+                "url": "https://api.github.com/repos/infira/ErrorHandler/zipball/8ed80e45074708f2a3401c6b140037e57e40d926",
+                "reference": "8ed80e45074708f2a3401c6b140037e57e40d926",
+                "shasum": ""
+            },
+            "require": {
+                "infira/utils": "1.*"
+            },
+            "require-dev": {
+                "clean/phpdoc-md": "*",
+                "phpmailer/phpmailer": "6.1.*"
+            },
+            "default-branch": true,
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/generalMethods.php"
+                ],
+                "psr-4": {
+                    "Infira\\Error\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "authors": [
+                {
+                    "name": "Gen Taliaru",
+                    "email": "gen@infira.ee"
+                }
+            ],
+            "description": "Comprehensive php error,notice, etc handler.",
+            "support": {
+                "issues": "https://github.com/infira/ErrorHandler/issues",
+                "source": "https://github.com/infira/ErrorHandler/tree/master"
+            },
+            "time": "2021-02-15T23:10:48+00:00"
+        },
+        {
+            "name": "infira/utils",
+            "version": "1.6.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/infira/utils.git",
+                "reference": "8639cff0f9a50fa97fb8beb441b9519a8701fb7f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/infira/utils/zipball/8639cff0f9a50fa97fb8beb441b9519a8701fb7f",
+                "reference": "8639cff0f9a50fa97fb8beb441b9519a8701fb7f",
                 "shasum": ""
             },
             "type": "library",
@@ -37,16 +82,22 @@
                 }
             ],
             "description": "Collection of usefule server,file, date handlers and helpers",
-            "time": "2020-08-17T14:01:28+00:00"
+            "support": {
+                "issues": "https://github.com/infira/utils/issues",
+                "source": "https://github.com/infira/utils/tree/1.6.2"
+            },
+            "time": "2021-01-21T22:24:01+00:00"
         }
     ],
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": [],
-    "prefer-stable": false,
+    "stability-flags": {
+        "infira/errorhandler": 20
+    },
+    "prefer-stable": true,
     "prefer-lowest": false,
     "platform": [],
     "platform-dev": [],
-    "plugin-api-version": "1.1.0"
+    "plugin-api-version": "2.0.0"
 }

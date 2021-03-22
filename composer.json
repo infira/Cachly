@@ -11,13 +11,14 @@
   "autoload"         : {
 	"psr-4": {
 	  "Infira\\Cachly\\options\\": "src/options",
-	  "Infira\\Cachly\\driver\\": "src/driver",
-	  "Infira\\Cachly\\"        : "src/"
+	  "Infira\\Cachly\\driver\\" : "src/driver",
+	  "Infira\\Cachly\\"         : "src/"
 	}
   },
   "minimum-stability": "dev",
   "prefer-stable"    : true,
   "require"          : {
-	"infira/utils": "1.*"
+	"infira/utils"       : "1.*",
+	"infira/errorhandler": "dev-master"
   }
 }

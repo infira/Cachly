@@ -119,8 +119,7 @@ abstract class DriverHelper
 	{
 		if (!$this->isSerializable($data))
 		{
-			Cachly::addExtraErrorInfo('data', $data);
-			Cachly::error('Cannot serialise cache data');
+			Cachly::error('Cannot serialise cache data', ['data' => $data]);
 		}
 		if ($this->FallbackDriver)
 		{

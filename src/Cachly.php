@@ -361,13 +361,19 @@ class Cachly
 	
 	####################### Start of helpers
 	
-	/**
-	 * @param string $msg
-	 * @throws \Error
-	 */
-	public static function error(string $msg)
+	public static function clearErrorExtraInfo()
 	{
-		throw new \Error("Cachly says: " . $msg);
+		\Infira\Error\Handler::clearExtraErrorInfo();
+	}
+	
+	public static function addExtraErrorInfo($name, $value = null)
+	{
+		\Infira\Error\Handler::addExtraErrorInfo($name, $value);
+	}
+	
+	public static function error(string $msg, $extra = null)
+	{
+		\Infira\Error\Handler::raise($msg, $extra);
 	}
 	
 	public static function hash(string $hashable)
