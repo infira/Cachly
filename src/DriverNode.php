@@ -61,15 +61,26 @@ class DriverNode
 		return ClassFarm::instance("Cachly->Driver->$name", $constructor);
 	}
 	
-	public function __get($property)
+	public function __get(string $property)
 	{
-		if (!isset($this->constructedPropDrivers[$property]))
+		if (!$this->exists($property))
 		{
 			Cachly::error("Driver property($property) not found");
 		}
 		$this->$property = $this->make($this->constructedPropDrivers[$property]);
 		
 		return $this->$property;
+	}
+	
+	/**
+	 * Does driver exists
+	 *
+	 * @param string $name
+	 * @return bool
+	 */
+	public function exists(string $name): bool
+	{
+		return isset($this->constructedPropDrivers[$name]);
 	}
 	
 	

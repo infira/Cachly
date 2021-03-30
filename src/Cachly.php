@@ -107,19 +107,6 @@ class Cachly
 		self::$DefaultDriverDefaultInstance = self::di($name, 'cachly');
 	}
 	
-	/**
-	 * Set custom cache key prefix
-	 * Cache keys are generated as follows  $yourCachePrefix . ";" .$_SERVER['HTTP_HOST'] . ";" . $_SERVER['DOCUMENT_ROOT'] . ";" . $this->driverName . $this->instanceName . $valueKey
-	 * Defaults to production
-	 *
-	 * @param string $prefix
-	 */
-	public static function setCacheKeyPrefix(string $prefix)
-	{
-		self::$options['keyPrefix'] = $prefix;
-	}
-	
-	
 	public final static function getDefaultDriver(): string
 	{
 		if (!self::$Driver)
@@ -132,6 +119,30 @@ class Cachly
 		}
 		
 		return self::$options['defaultDriver'];
+	}
+	
+	/**
+	 * Set custom cache key prefix
+	 * Cache keys are generated as follows  $yourCachePrefix . ";" .$_SERVER['HTTP_HOST'] . ";" . $_SERVER['DOCUMENT_ROOT'] . ";" . $this->driverName . $this->instanceName . $valueKey
+	 * Defaults to production
+	 *
+	 * @param string $prefix
+	 */
+	public static function setCacheKeyPrefix(string $prefix)
+	{
+		self::$options['keyPrefix'] = $prefix;
+	}
+	
+	/**
+	 * Add new driver
+	 *
+	 * @param string   $driverName
+	 * @param string   $propertyName - $DriverNode property name is used to accss this driver (Cachly::$Driver->myDriver....)
+	 * @param callable $constructor
+	 */
+	public final function addDriver(string $driverName, string $propertyName, callable $constructor)
+	{
+		self::$Driver->add($driverName, $propertyName, $constructor);
 	}
 	
 	/**
@@ -225,25 +236,12 @@ class Cachly
 	
 	public final static function isConfigured(string $driver): bool
 	{
-		$optName = null;
-		if ($driver == self::DB)
+		if (!Cachly::$Driver->exists($driver))
 		{
-			$optName = 'dbOptions';
-		}
-		elseif ($driver == self::FILE)
-		{
-			$optName = 'fileOptions';
-		}
-		elseif ($driver == self::MEM)
-		{
-			$optName = 'memcachedOptions';
-		}
-		elseif ($driver == self::REDIS)
-		{
-			$optName = 'redisOptions';
+			self::error('Unknown driver');
 		}
 		
-		return Cachly::getOpt($optName) !== null;
+		return Cachly::$Driver->$driver::isConfigured();
 	}
 	
 	/**

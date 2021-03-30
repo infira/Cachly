@@ -72,9 +72,9 @@ abstract class DriverHelper
 	/**
 	 * @return bool
 	 */
-	protected function isConfigured(): bool
+	public static function isConfigured(): bool
 	{
-		return Cachly::isConfigured($this->driverName);
+		return true;
 	}
 	
 	/**

@@ -267,20 +267,15 @@ class myAwesomeDriverActualClass extends \Infira\Cachly\DriverHelper
 		// TODO: Implement doGc() method.
 	}
 }
-Cachly::$Driver->add('myAwesomeDriver','Awesom', function ()
+Cachly::addDriver('myAwesomeDriver','Awesome', function ()
 {
 	return new myAwesomeDriverActualClass();
 });
 Cachly::setDefaultDriver('myAwesomeDriver');
 
-Cachly::$Driver->add('myCoolDriver', 'Cool', function ()
-{
-	return new myCoolDriver();
-});
-
 Cachly::set("myKey", "value"); //uses myAwesomeDriver
 
-Cachly::di("myCoolDriver")->set("myKey", "value"); //uses myCoolDriver
+Cachly::di("myAwesomeDriver")->set("myKey", "value"); //uses myAwesomeDriver
 
 ```
 
@@ -289,16 +284,17 @@ Cachly::di("myCoolDriver")->set("myKey", "value"); //uses myCoolDriver
 ```php
 class Cachly extends \Infira\Cachly\Cachly
 {
-	/**
-	 * My cool driver
-	 */
-	public static function cool(string $instance = 'cachly'): \Infira\Cachly\Cacher
+	 /**
+     * @param string $instance
+     * @return \Infira\Cachly\Cacher
+     */
+	public static function awesome(string $instance = 'cachly'): \Infira\Cachly\Cacher
 	{
-		return self::di("myCoolDriver", $instance);
+		return self::di("myAwesomeDriver", $instance);
 	}
 }
-//now instead of Cachly::di("myCoolDriver")->set("myKey", "value"); you can use
-Cachly::cool()->set("myKey", "value");
+//now instead of Cachly::di("myAwesomeDriver")->set("myKey", "value"); you can use
+Cachly::awesome()->set("myKey", "value");
 ```
 
 # Usage examples
@@ -381,30 +377,14 @@ Cachly::sess('mySessionInstance')->debug();
 
 ## Garbage collction
 
-Redis and memcached will do their own garbage collection by server side To initiate garbage collection manually
+Redis and memcached will do their own garbage collection by server side. <br>
+To initiate garbage collection manually
 
 ```php
 Cachly::$Driver->DriverName->gc();
 ```
 
-## Flush drivers all data
-
-These methods flushes all data (including all instances) inside the driver
-
-### Flushing built in drivers
-
-```php
-Cachly::$Driver->DriverName->flush();
-Cachly::$Driver->Cool->flush(); //flushes "myCoolDriver" driver data which
-```
-
-### Flushing custom drivers
-
-```php
-Cachly::$Driver->Awesom->flush(); //flushes "myAwesomeDriver" driver data which
-```
-
-## Flushing instance data
+## Flushing
 
 ```php
 Cachly::flush();                                                     //flushes default driver default instance data
@@ -412,6 +392,8 @@ Cachly::instance("myInstance")->flush();                             //flushes d
 Cachly::Collection("myCollection")->flush();                         //flushes default driver default instance "myCollection" collection data
 Cachly::instance("myInstance")->Collection("myCollection")->flush(); //flushes default driver "myInstance" instance "myCollection" collection data
 Cachly::sess("myInstance")->Collection("myCollection")->flush();     //flushes session driver "myInstance" "myCollection" collection data
+Cachly::$Driver->Sess->flush();                                      //flushes session driver all data
+Cachly::$Driver->Awesome->flush();                                   //flushes custom driver Awesome all data
 ```
 
 # Cachly methods
@@ -1570,7 +1552,7 @@ Cachly::configRedis($options);
 or you can use fallback to own driver
 
 ```php
-$options['fallbackDriver'] = 'myCoolDriver';
+$options['fallbackDriver'] = 'myAwesomeDriver';
 Cachly::configRedis($options);
 ```
 

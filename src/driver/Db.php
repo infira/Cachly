@@ -19,7 +19,7 @@ class Db extends \Infira\Cachly\DriverHelper
 	public function __construct()
 	{
 		$this->setDriver(Cachly::DB);
-		if (!$this->isConfigured())
+		if (!self::isConfigured())
 		{
 			Cachly::error("Db driver can't be used because its not configured. Use Cachly::configureDb");
 		}
@@ -77,6 +77,14 @@ class Db extends \Infira\Cachly\DriverHelper
 	public function getClient(): \mysqli
 	{
 		return $this->mysqli;
+	}
+	
+	/**
+	 * @inheritDoc
+	 */
+	public static function isConfigured(): bool
+	{
+		return Cachly::getOpt('dbOptions') !== null;
 	}
 	
 	/**
