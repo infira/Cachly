@@ -17,99 +17,84 @@ use Infira\Utils\ClassFarm;
  */
 class DriverNode
 {
-	private $constructedPropDrivers = [];
+	private $registeredPropertyDrivers = [];
 	
-	private $driverConstructors = [];
+	private $registeredDrivers = [];
 	
 	public function __construct()
 	{
 		//register built drivers
-		$this->doAdd(Cachly::DB, 'Db', '\Infira\Cachly\driver\Db');
-		$this->doAdd(Cachly::FILE, 'File', '\Infira\Cachly\driver\File');
-		$this->doAdd(Cachly::MEM, 'Mem', '\Infira\Cachly\driver\Memcached');
-		$this->doAdd(Cachly::REDIS, 'Redis', '\Infira\Cachly\driver\Redis');
-		$this->doAdd(Cachly::SESS, 'Sess', '\Infira\Cachly\driver\Session');
-		$this->doAdd(Cachly::RUNTIME_MEMORY, 'Rm', '\Infira\Cachly\driver\RuntimeMemory');
-	}
-	
-	/**
-	 * Construct driver
-	 *
-	 * @param string $name or builtint type name
-	 * @param \Infira\Cachly\DriverHelper
-	 */
-	public function make(string $name): object
-	{
-		$constructor = null;
-		if (isset($this->driverConstructors[$name]))
-		{
-			$constructor = $this->driverConstructors[$name];
-			if (is_string($constructor)) // it means built in driver
-			{
-				$className   = $constructor;
-				$constructor = function () use ($className)
-				{
-					return new $className;
-				};
-			}
-		}
-		else
-		{
-			Cachly::error("Unknown driver = " . $name);
-		}
-		
-		return ClassFarm::instance("Cachly->Driver->$name", $constructor);
+		$this->register(Cachly::DB, 'Db', '\Infira\Cachly\driver\Db');
+		$this->register(Cachly::FILE, 'File', '\Infira\Cachly\driver\File');
+		$this->register(Cachly::MEM, 'Mem', '\Infira\Cachly\driver\Memcached');
+		$this->register(Cachly::REDIS, 'Redis', '\Infira\Cachly\driver\Redis');
+		$this->register(Cachly::SESS, 'Sess', '\Infira\Cachly\driver\Session');
+		$this->register(Cachly::RUNTIME_MEMORY, 'Rm', '\Infira\Cachly\driver\RuntimeMemory');
 	}
 	
 	public function __get(string $property)
 	{
-		if (!$this->exists($property))
+		if (!isset($this->registeredPropertyDrivers[$property]))
 		{
 			Cachly::error("Driver property($property) not found");
 		}
-		$this->$property = $this->make($this->constructedPropDrivers[$property]);
+		$driver = $this->registeredPropertyDrivers[$property];
+		if (!isset($this->registeredDrivers[$driver]))
+		{
+			Cachly::error("Unknown driver = " . $driver);
+		}
+		
+		$constructor = $this->registeredDrivers[$driver]->constructor;
+		if (is_string($constructor)) // it means built in driver
+		{
+			$className   = $constructor;
+			$constructor = function () use ($className)
+			{
+				return new $className;
+			};
+		}
+		$this->registeredDrivers[$driver]->isConstructed = true;
+		
+		$this->$property = ClassFarm::instance("Cachly->Driver->$driver", $constructor);
 		
 		return $this->$property;
 	}
 	
-	/**
-	 * Does driver exists
-	 *
-	 * @param string $name
-	 * @return bool
-	 */
-	public function exists(string $name): bool
+	public function get(string $driver): DriverHelper
 	{
-		return isset($this->constructedPropDrivers[$name]);
+		if (!isset($this->registeredDrivers[$driver]))
+		{
+			Cachly::error('Driver is not registered');
+		}
+		$property = $this->registeredDrivers[$driver]->property;
+		
+		return $this->$property;
 	}
 	
+	public function isConstructed(string $driver): bool
+	{
+		if (!isset($this->registeredDrivers[$driver]))
+		{
+			return false;
+		}
+		
+		return $this->registeredDrivers[$driver]->isConstructed;
+	}
 	
 	/**
 	 * Add new driver
 	 *
-	 * @param string   $driverName
-	 * @param string   $propertyName - $DriverNode property name is used to accss this driver (Cachly::$Driver->myDriver....)
-	 * @param callable $constructor
-	 */
-	public final function add(string $driverName, string $propertyName, callable $constructor)
-	{
-		$this->doAdd($driverName, $propertyName, $constructor);
-	}
-	
-	/**
-	 * For internal use
-	 *
-	 * @param string          $driverName
-	 * @param string          $propertyName
+	 * @param string          $driver
+	 * @param string          $property
 	 * @param string|callable $constructor
 	 */
-	private final function doAdd(string $driverName, string $propertyName, $constructor)
+	public final function register(string $driver, string $property, $constructor)
 	{
-		if (isset($this->driverConstructors[$driverName]))
+		if (isset($this->registeredDrivers[$driver]))
 		{
-			Cachly::error("driver($driverName) is already registered");
+			Cachly::error("driver($driver) is already registered");
 		}
-		$this->driverConstructors[$driverName]       = $constructor;
-		$this->constructedPropDrivers[$propertyName] = $driverName;
+		$this->registeredDrivers[$driver]           = (object)['property' => $property, 'constructor' => $constructor, 'isConstructed' => false];
+		$this->registeredPropertyDrivers[$property] = $driver;
 	}
 }

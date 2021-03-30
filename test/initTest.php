@@ -58,7 +58,7 @@ Cachly::configureMemcached($memcachedOptions);
 $dbOptions           = new DbDriverOptions();
 $dbOptions->user     = 'vagrant';
 $dbOptions->password = 'parool';
-$dbOptions->db       = 'klavis_kis';
+$dbOptions->db       = 'cachly';
 $dbOptions->table    = 'cachly_cache';
 Cachly::configureDb($dbOptions);
 
@@ -72,3 +72,4 @@ if (Http::existsGET('single'))
 {
 	$drivers = [Http::get('single')];
 }
+Cachly::init();

@@ -36,7 +36,7 @@ abstract class DriverHelper
 	{
 		if ($this->fallbackDriverName)
 		{
-			$this->FallbackDriver = Cachly::$Driver->make($this->fallbackDriverName);
+			$this->FallbackDriver = Cachly::$Driver->get($this->fallbackDriverName);
 		}
 		else
 		{
@@ -44,9 +44,9 @@ abstract class DriverHelper
 		}
 	}
 	
-	protected function setFallbackDriver()
+	protected function setFallbackDriver(string $driverName)
 	{
-		$this->FallbackDriver = Cachly::$Driver->make($this->fallbackDriverName);
+		$this->fallbackDriverName = $driverName;
 	}
 	
 	/**

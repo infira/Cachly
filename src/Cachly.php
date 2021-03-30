@@ -136,13 +136,13 @@ class Cachly
 	/**
 	 * Add new driver
 	 *
-	 * @param string   $driverName
+	 * @param string   $driver       - driver name
 	 * @param string   $propertyName - $DriverNode property name is used to accss this driver (Cachly::$Driver->myDriver....)
 	 * @param callable $constructor
 	 */
-	public final function addDriver(string $driverName, string $propertyName, callable $constructor)
+	public final function addDriver(string $driver, string $propertyName, callable $constructor)
 	{
-		self::$Driver->add($driverName, $propertyName, $constructor);
+		self::$Driver->register($driver, $propertyName, $constructor);
 	}
 	
 	/**
@@ -236,12 +236,16 @@ class Cachly
 	
 	public final static function isConfigured(string $driver): bool
 	{
-		if (!Cachly::$Driver->exists($driver))
+		if (!self::$Driver)
 		{
-			self::error('Unknown driver');
+			self::error("Cachly is not initialized use Cachly::init");
+		}
+		if (!Cachly::$Driver->isConstructed($driver))
+		{
+			return false;
 		}
 		
-		return Cachly::$Driver->$driver::isConfigured();
+		return Cachly::$Driver->get($driver)::isConfigured();
 	}
 	
 	/**
@@ -345,15 +349,15 @@ class Cachly
 	/**
 	 * Shortcut to driver cacher instance by name
 	 *
-	 * @param string $driver
+	 * @param string $driver - driver name
 	 * @param string $instance
 	 * @return Cacher
 	 */
-	public final static function di(string $driver, string $instance = 'cachly'): object
+	public final static function di(string $driver, string $instance = 'cachly'): Cacher
 	{
 		return ClassFarm::instance("Cachly->$driver->$instance", function () use ($instance, $driver)
 		{
-			return new Cacher($instance, self::$Driver->make($driver));
+			return new Cacher($instance, self::$Driver->get($driver));
 		});
 	}
 	

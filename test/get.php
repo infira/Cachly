@@ -7,7 +7,6 @@ use Infira\Cachly\Cacher;
 use Infira\Utils\Date;
 
 require "initTest.php";
-Cachly::init();
 foreach ($drivers as $driver)
 {
 	if ($driver == Cachly::RUNTIME_MEMORY)
@@ -46,11 +45,11 @@ foreach ($drivers as $driver)
 			$check[$parentName]['collections'][$name]['items'] = $Collection->getItems();
 		});
 	});
-	$checkItems['tree()']                               = ['e98c4712', $check, true];
-	$checkItems['collection->getItems()']               = ['c2214a3e', Cachly::Collection("collection")->getItems(), true];
+	$checkItems['tree()']                               = ['e10f8a5b', $check, true];
+	$checkItems['collection->getItems()']               = ['cc8a329b', Cachly::Collection("collection")->getItems(), true];
 	$checkItems['collection->get()']                    = ['collection cacheKey2 value', Cachly::Collection("collection")->get("collection cacheKey2"), false];
 	$checkItems['collection->get()']                    = ['subCollection cache value', Cachly::Collection("collection")->Collection("subCollection")->get("sub collection cacheKey"), false];
-	$checkItems['collection->subCollection getItems()'] = ['457fb6af', Cachly::Collection("collection")->Collection("subCollection")->getItems(), true];
+	$checkItems['collection->subCollection getItems()'] = ['7fba6dfc', Cachly::Collection("collection")->Collection("subCollection")->getItems(), true];
 	$checkItems['get()']                                = ['cacheValue', Cachly::get("cacheKey"), false];
 	$checkItems['expiresAt(cacheKey)']                  = ['never', Cachly::expiresAt("cacheKey"), false];
 	foreach ($checkItems as $name => $_row)
@@ -63,37 +62,37 @@ foreach ($drivers as $driver)
 		}
 		if ($aCID != $checkCID)
 		{
-			$throw(false, "$name failed", [$aCID => $check]);
+			$throw(false, "$name failed", [$aCID => $check, 'correctCID' => $checkCID]);
 		}
 	}
 	Cachly::deletedExpired();
 	$checkItems                              = [];
 	$CIDS                                    = [];
-	$CIDS['afterExpire->afterDeleteRegex']   = '02f7bcc3';
+	$CIDS['afterExpire->afterDeleteRegex']   = '33f87dfd';
 	$CIDS['afterExpire->beforeDeleteRegex']  = 'f4c53857';
 	$CIDS['beforeExpire->afterDeleteRegex']  = '37ea9a75';
-	$CIDS['beforeExpire->beforeDeleteRegex'] = '5f14b49d';
+	$CIDS['beforeExpire->beforeDeleteRegex'] = '73ed4580';
 	
 	$checkItems['getItems'] = ['check' => Cachly::getItems(), 'CIDS' => $CIDS];
 	foreach ($checkItems as $name => $_row)
 	{
 		$Item  = (object)$_row;
-		$check = $Item->check;;
-		$aCID = Gen::cacheID($check);
+		$check = $Item->check;
+		$aCID  = Gen::cacheID($check);
 		if (time() > $controlTime)
 		{
 			if ($deleteRegexAcitvated)
 			{
 				if ($aCID != $Item->CIDS['afterExpire->afterDeleteRegex'])
 				{
-					$throw(false, "$name(afterExpire->afterDeleteRegex) failed", [$aCID => $check]);
+					$throw(false, "$name(afterExpire->afterDeleteRegex) failed", [$aCID => $check, 'correctCID' => $Item->CIDS['afterExpire->afterDeleteRegex']]);
 				}
 			}
 			else
 			{
 				if ($aCID != $Item->CIDS['afterExpire->beforeDeleteRegex'])
 				{
-					$throw(false, "$name(afterExpire->beforeDeleteRegex) failed", [$aCID => $check]);
+					$throw(false, "$name(afterExpire->beforeDeleteRegex) failed", [$aCID => $check, 'correctCID' => $Item->CIDS['afterExpire->beforeDeleteRegex']]);
 				}
 			}
 		}
@@ -104,14 +103,14 @@ foreach ($drivers as $driver)
 				
 				if ($aCID != $Item->CIDS['beforeExpire->afterDeleteRegex'])
 				{
-					$throw(false, "$name(beforeExpire->afterDeleteRegex) failed", [$aCID => $check]);
+					$throw(false, "$name(beforeExpire->afterDeleteRegex) failed", [$aCID => $check, 'correctCID' => $Item->CIDS['beforeExpire->afterDeleteRegex']]);
 				}
 			}
 			else
 			{
 				if ($aCID != $Item->CIDS['beforeExpire->beforeDeleteRegex'])
 				{
-					$throw(false, "$name(beforeExpire->beforeDeleteRegex) failed", [$aCID => $check]);
+					$throw(false, "$name(beforeExpire->beforeDeleteRegex) failed", [$aCID => $check, 'correctCID' => $Item->CIDS['beforeExpire->beforeDeleteRegex']]);
 				}
 			}
 		}

@@ -19,11 +19,11 @@ class Cacher
 	protected $Driver;
 	
 	/**
-	 * @param string          $instanceName
-	 * @param DriverHelper    $Driver
-	 * @param                 $Driver
+	 * @param string       $instanceName
+	 * @param DriverHelper $Driver
+	 * @param DriverHelper $Driver
 	 */
-	public function __construct(string $instanceName, $Driver)
+	public function __construct(string $instanceName, DriverHelper $Driver)
 	{
 		$this->driverName   = $Driver->getName();
 		$this->instanceName = $instanceName;

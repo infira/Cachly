@@ -7,7 +7,6 @@ use Infira\Utils\Gen;
 
 require "initTest.php";
 
-Cachly::init();
 Cachly::$Driver->Db->flush();
 Cachly::$Driver->File->flush();
 Cachly::$Driver->Mem->flush();
