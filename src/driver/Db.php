@@ -49,7 +49,7 @@ class Db extends \Infira\Cachly\DriverHelper
 			{
 				if (is_callable($this->Options->afterConnect))
 				{
-					callback($this->Options->afterConnect, null, [$this->mysqli]);
+					call_user_func_array($this->Options->afterConnect, [$this->mysqli]);
 				}
 			}
 		}

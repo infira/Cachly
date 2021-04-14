@@ -53,7 +53,7 @@ class Redis extends \Infira\Cachly\DriverHelper
 						if (is_callable($this->Options->afterConnect))
 						{
 							$f = $this->Options->afterConnect;
-							callback($f, null, [$this->Redis]);
+							call_user_func_array($f, [$this->Redis]);
 						}
 					}
 				}
