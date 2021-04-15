@@ -27,10 +27,7 @@ class Cacher
 	{
 		$this->driverName   = $Driver->getName();
 		$this->instanceName = $instanceName;
-		if ($Driver)
-		{
-			$this->Driver = &$Driver;
-		}
+		$this->Driver       = &$Driver;
 	}
 	
 	/**
