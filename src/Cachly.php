@@ -92,6 +92,24 @@ class Cachly
 	}
 	
 	/**
+	 * Check is cachly initialized
+	 *
+	 * @return bool
+	 */
+	public static function isInitialized(): bool
+	{
+		return (bool)self::$Driver;
+	}
+	
+	public static function checkInitStatus()
+	{
+		if (!self::isInitialized())
+		{
+			self::error("Cachly is not initialized use Cachly::init");
+		}
+	}
+	
+	/**
 	 * Set default driver
 	 *
 	 * @param string $name
@@ -99,20 +117,14 @@ class Cachly
 	 */
 	public final static function setDefaultDriver(string $name): void
 	{
-		if (!self::$Driver)
-		{
-			self::error("Cachly is not initialized use Cachly::init");
-		}
+		self::checkInitStatus();
 		self::$options['defaultDriver']     = $name;
 		self::$DefaultDriverDefaultInstance = self::di($name, 'cachly');
 	}
 	
 	public final static function getDefaultDriver(): string
 	{
-		if (!self::$Driver)
-		{
-			self::error("Cachly is not initialized use Cachly::init");
-		}
+		self::checkInitStatus();
 		if (!isset(self::$options['defaultDriver']))
 		{
 			self::error("Cachly default driver is not set");
@@ -236,10 +248,7 @@ class Cachly
 	
 	public final static function isConfigured(string $driver): bool
 	{
-		if (!self::$Driver)
-		{
-			self::error("Cachly is not initialized use Cachly::init");
-		}
+		self::checkInitStatus();
 		if (!Cachly::$Driver->isConstructed($driver))
 		{
 			return false;
