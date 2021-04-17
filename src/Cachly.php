@@ -364,13 +364,10 @@ class Cachly
 	 */
 	public final static function di(string $driver, string $instance = 'cachly'): Cacher
 	{
-		if (!self::isConfigured($driver))
-		{
-			self::error("Driver $driver is not configured");
-		}
-		
 		return ClassFarm::instance("Cachly->$driver->$instance", function () use ($instance, $driver)
 		{
+			self::checkInitStatus();
+			
 			return new Cacher($instance, self::$Driver->get($driver));
 		});
 	}
