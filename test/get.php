@@ -2,9 +2,7 @@
 
 use Infira\Cachly\Cachly;
 use Infira\Utils\Gen as Gen;
-use Infira\Utils\Http as Http;
-use Infira\Cachly\Cacher;
-use Infira\Utils\Date;
+use Infira\Utils\Session as Sess;
 
 require "initTest.php";
 foreach ($drivers as $driver)

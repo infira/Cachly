@@ -1,12 +1,9 @@
 <?php
 require_once "../vendor/autoload.php";
 
-class Sess extends Infira\Utils\Session
-{
-
-}
 
 use Infira\Utils\File;
+use Infira\Utils\Session AS Sess;
 
 if (defined("TESTING_CODE_PERFORMANCE"))
 {

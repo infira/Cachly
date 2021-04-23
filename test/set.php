@@ -2,8 +2,7 @@
 
 use Infira\Cachly\Cachly;
 use Infira\Utils\Http as Http;
-use Infira\Utils\Date;
-use Infira\Utils\Gen;
+use Infira\Utils\Session as Sess;
 
 require "initTest.php";
 
