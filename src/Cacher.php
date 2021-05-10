@@ -696,9 +696,9 @@ class Cacher
 			{
 				$v = ($v) ? '1' : '0';
 			}
-			elseif (is_array($v))
+			elseif (is_array($v) or is_object($v))
 			{
-				$v = $this->packKey($v);
+				$v = $this->packKey((array)$v);
 			}
 			$items[] = $v;
 		}
