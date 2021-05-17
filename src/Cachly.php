@@ -374,19 +374,14 @@ class Cachly
 	
 	####################### Start of helpers
 	
-	public static function clearErrorExtraInfo()
-	{
-		\Infira\Error\Handler::clearExtraErrorInfo();
-	}
-	
-	public static function addExtraErrorInfo($name, $value = null)
-	{
-		\Infira\Error\Handler::addExtraErrorInfo($name, $value);
-	}
-	
+	/**
+	 * @param string $msg
+	 * @param null   $extra
+	 * @throws \Infira\Cachly\CachlyException
+	 */
 	public static function error(string $msg, $extra = null)
 	{
-		\Infira\Error\Handler::raise($msg, $extra);
+		throw new CachlyException($msg, $extra);
 	}
 	
 	public static function hash(string $hashable)
