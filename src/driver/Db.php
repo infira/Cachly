@@ -101,7 +101,7 @@ class Db extends \Infira\Cachly\DriverHelper
 			$expires = date('Y-m-d H:i:s', $expires);
 		}
 		
-		return $this->execute('REPLACE INTO %tableName% (ID,DATA,expires) VALUES(%ID%,%data%,%expires%)', ['ID' => $CID, 'data' => $data, 'expires' => $expires]) ? true : false;
+		return $this->execute('REPLACE INTO %tableName% (ID,data,expires) VALUES(%ID%,%data%,%expires%)', ['ID' => $CID, 'data' => $data, 'expires' => $expires]) ? true : false;
 	}
 	
 	/**
