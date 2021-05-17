@@ -393,7 +393,6 @@ class Cachly
 	{
 		$method = self::$hashAlgorithm;
 		$hash   = $method($hashable);
-		
 		/*
 		 * Make sure that cacheIDS always starts with a letter
 		 * https://stackoverflow.com/questions/18797251/notice-unknown-skipping-numeric-key-1-in-unknown-on-line-0

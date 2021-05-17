@@ -75,7 +75,6 @@ class Session extends \Infira\Cachly\DriverHelper
 		$output = [];
 		foreach ($_SESSION['cachlySessionCIDS'] as $CID => $v)
 		{
-			$CID          = substr($CID, 1); //removes letter c in front of it
 			$output[$CID] = $_SESSION[$CID];
 		}
 		

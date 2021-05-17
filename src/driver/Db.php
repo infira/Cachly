@@ -181,7 +181,7 @@ class Db extends \Infira\Cachly\DriverHelper
 	 */
 	protected function doGc(): bool
 	{
-		return $this->execute('DELETE FROM %tableName% WHERE expires < TIME() AND expires IS NOT NULL');
+		return $this->execute('DELETE FROM %tableName% WHERE expires < CURRENT_TIMESTAMP () AND expires IS NOT NULL');
 	}
 	
 	################ private methods
