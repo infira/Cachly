@@ -384,6 +384,14 @@ class Cachly
 		throw new CachlyException($msg, $extra);
 	}
 	
+	public static function genHashKey(string $driver, ?string $instance, ?string $key): string
+	{
+		$host    = $_SERVER['HTTP_HOST'] ?? '';
+		$docRoot = $_SERVER['DOCUMENT_ROOT'] ?? '';
+		
+		return self::getOpt('keyPrefix') . ';' . $host . ";" . $docRoot . ";" . $driver . $instance . $key;
+	}
+	
 	public static function hash(string $hashable)
 	{
 		$method = self::$hashAlgorithm;

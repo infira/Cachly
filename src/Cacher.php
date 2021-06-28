@@ -670,15 +670,14 @@ class Cacher
 	 * @param string $key
 	 * @return string
 	 */
-	private function genItemCID(string $key)
+	private function genItemCID(string $key): string
 	{
 		if (!$key)
 		{
 			Cachly::error("Cache key cannot be empty");
 		}
-		$hashKey = Cachly::getOpt('keyPrefix') . ';' . $_SERVER['HTTP_HOST'] . ";" . $_SERVER['DOCUMENT_ROOT'] . ";" . $this->driverName . $this->instanceName . $key;
 		
-		return Cachly::hash($hashKey);
+		return Cachly::hash(Cachly::genHashKey($this->driverName, $this->instanceName, $key));
 	}
 	
 	/**

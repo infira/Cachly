@@ -2,8 +2,6 @@
 
 namespace Infira\Cachly;
 
-use Infira\Cachly\Cacher;
-
 class KeyStorage
 {
 	private $driverName;
@@ -92,16 +90,14 @@ class KeyStorage
 	 * @param string $key
 	 * @return string
 	 */
-	private function genCID(string $key)
+	private function genCID(string $key): string
 	{
 		if (!$key)
 		{
 			Cachly::error("Cache key cannot be empty");
 		}
-		$hashKey = $_SERVER['HTTP_HOST'] . ";" . $_SERVER['DOCUMENT_ROOT'] . $this->driverName . $this->storageName . $key;
 		
-		
-		return Cachly::hash($hashKey);
+		return Cachly::hash(Cachly::genHashKey($this->driverName, $this->storageName, $key));
 	}
 }
 
