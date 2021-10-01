@@ -2,7 +2,6 @@
 
 namespace Infira\Cachly\driver;
 
-use Infira\Utils\Fix;
 use Infira\Utils\File as Fm;
 use Infira\Utils\Dir;
 use Infira\Cachly\Cachly;
@@ -90,13 +89,10 @@ class File extends \Infira\Cachly\DriverHelper
 	protected function doGetItems(): array
 	{
 		$output = [];
-		foreach (Dir::getContents($this->path) as $f)
+		foreach (Dir::getFileNames($this->path, ['cache']) as $f)
 		{
-			if (strpos($f, '.cache'))
-			{
-				$CID          = str_replace('.cache', '', $f);
-				$output[$CID] = $this->get($CID);
-			}
+			$CID          = str_replace('.cache', '', $f);
+			$output[$CID] = $this->get($CID);
 		}
 		
 		return $output;
@@ -107,15 +103,15 @@ class File extends \Infira\Cachly\DriverHelper
 	 */
 	protected function doFlush(): bool
 	{
-		return Dir::flush(Fix::dirPath($this->path));
+		Dir::flush($this->path);
+		
+		return true;
 	}
 	
 	################ private methods
-	
-	
 	private function getFileName(string $CID): string
 	{
-		return Fix::dirPath($this->path) . "$CID.cache";
+		return Dir::fixPath($this->path) . "$CID.cache";
 	}
 	
 	/**

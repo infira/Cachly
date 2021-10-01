@@ -18,6 +18,6 @@
   "minimum-stability": "dev",
   "prefer-stable": true,
   "require": {
-	"infira/utils": "1.*"
+	"infira/utils": "2.*"
   }
 }

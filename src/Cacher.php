@@ -41,10 +41,7 @@ class Cacher
 		});
 	}
 	
-	/**
-	 * @return KeyStorage
-	 */
-	private function CollectionKeys()
+	private function CollectionKeys(): KeyStorage
 	{
 		return ClassFarm::instance("Cachly->Driver->cachlyCollectionKeyHolder" . $this->instanceName . $this->driverName, function ()
 		{

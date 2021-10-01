@@ -3,6 +3,7 @@
 namespace Infira\Cachly;
 
 use Infira\Cachly\Cachly;
+use Infira\Utils\Is;
 
 abstract class DriverHelper
 {
@@ -85,7 +86,7 @@ abstract class DriverHelper
 	 */
 	private function isSerializable($value)
 	{
-		if (is_closure($value) or is_resource($value))
+		if (Is::closure($value) or is_resource($value))
 		{
 			return false;
 		}
