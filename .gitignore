@@ -2,3 +2,4 @@ test/fileCache/*
 !test/fileCache/dummy.txt
 test/tmp/*
 !test/tmp/dummy.txt
+/vendor

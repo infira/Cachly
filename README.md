@@ -1285,7 +1285,7 @@ Set key for further use Its a old way of [once](#once)
 
 #### Example
 
-I reccoomend to use [once](#once) but nonetheless it exists for backward compatibility
+I recommend to use [once](#once) but nonetheless it exists for backward compatibility
 
 ```php
 function getMyStuff($arg1, $arg2, $arg3)

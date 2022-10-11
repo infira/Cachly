@@ -3,21 +3,21 @@
   "description": "Comprehensive cache drivers for php",
   "license": "MIT",
   "authors": [
-	{
-	  "name": "Gen Taliaru",
-	  "email": "gen@infira.ee"
-	}
+    {
+      "name": "Gen Taliaru",
+      "email": "gen@infira.ee"
+    }
   ],
   "autoload": {
-	"psr-4": {
-	  "Infira\\Cachly\\options\\": "src/options",
-	  "Infira\\Cachly\\driver\\": "src/driver",
-	  "Infira\\Cachly\\": "src/"
-	}
+    "psr-4": {
+      "Infira\\Cachly\\options\\": "src/options",
+      "Infira\\Cachly\\driver\\": "src/driver",
+      "Infira\\Cachly\\": "src/"
+    }
   },
   "minimum-stability": "dev",
   "prefer-stable": true,
   "require": {
-	"infira/utils": "2.*"
+    "infira/wolo": "dev-main"
   }
 }
