@@ -52,8 +52,8 @@ Cachly::configure([
 
 **Options**
 
-* `defaultAdapter` - adapter which will be used when accessing Cachly::$instanceMethod(...), ex. `Cachly::get('myCacheItem')`
-* `memAdapter` - adapter which will be used when accessing Cachly::mem()->$instanceMethod, ex. `Cachly::mem()->get('myCacheItem')`
+* `defaultAdapter` - adapter which will be used when accessing Cachly::$instanceMethod(...), ex. `Cachly::getValue('myCacheItem')`
+* `memAdapter` - adapter which will be used when accessing Cachly::mem()->$instanceMethod, ex. `Cachly::mem()->getValue('myCacheItem')`
 * `defaultInstanceName` - string which will be used to generate cacheIDS
 * `cacheIDHashAlgorithm` - hash Algorithm used in making cacheID's
 * `Cachly::setPropertyInstances` - for accessing Cachly::$sess instance
@@ -122,9 +122,9 @@ Cachly::setPropertyInstances([
     Cachly::MEM => static fn() => Cachly::mem(),
 ]);
 //now you can access
-Cachly::$sess->put(...)
+Cachly::$sess->putValue(...)
 //or
-Cachly::sess('new instance')->put(...)
+Cachly::sess('new instance')->putValue(...)
 ```
 
 ## Configure your own adapter (basic)
@@ -177,7 +177,7 @@ Cachly::SESS => static fn() => Cachly::sess(),
 Cachly::DB => static fn() => Cachly::db(),
 Cachly::FILE => static fn() => Cachly::file(),
 ]);
-$Cachly::$sess->put(...);
+$Cachly::$sess->putValue(...);
 ```
 
 # Examples
@@ -187,13 +187,13 @@ $Cachly::$sess->put(...);
 Once default adapter is configured you can use default methods for caching.
 
 ```php
-Cachly::put('myKey', 'my Value', '+1 day');
+Cachly::putValue('myKey', 'my Value', '+1 day');
 
 if (Cachly::has('myKey'))
 {
 	//yei, still exists
-	echo Cachly::get('myKey');
-	Cachly::forget('myKey');
+	echo Cachly::getValue('myKey');
+	Cachly::forgetValue('myKey');
 }
 
 /**
@@ -220,14 +220,14 @@ Cachly::once('key1',$filters,$someOtherVariable, function (\Infira\Cachly\Item\C
 
 //you can use also collections
 $MyCollection = Cachly::sub('myCollectionName');
-$MyCollection->put('myKey1', 'value1');
-$MyCollection->put('myKey2', 'value2');
-$MyCollection->put('myKey3', 'value3');
+$MyCollection->putValue('myKey1', 'value1');
+$MyCollection->putValue('myKey2', 'value2');
+$MyCollection->putValue('myKey3', 'value3');
 $MyCollectionSub = $MyCollection::sub('subCollection');
-$MyCollectionSub->put('myKey1', 'value1');
-$MyCollectionSub->put('myKey2', 'value2');
-$MyCollectionSub->put('myKey3', 'value3');
-$MyCollection->get('myKey3'); //outputs value3
+$MyCollectionSub->putValue('myKey1', 'value1');
+$MyCollectionSub->putValue('myKey2', 'value2');
+$MyCollectionSub->putValue('myKey3', 'value3');
+$MyCollection->getValue('myKey3'); //outputs value3
 $MyCollection->all(); //outputs
 /*
 Array
@@ -237,7 +237,7 @@ Array
     [myKey3] => value
 )
 */
-$MyCollection::sub('subCollection')->get('myKey3'); //outputs value3
+$MyCollection::sub('subCollection')->getValue('myKey3'); //outputs value3
 $MyCollectionSub->all(); //outputs
 /*
 Array
@@ -252,7 +252,7 @@ Array
 ## Using a new instance for default adapter
 
 ```php
-Cachly::instance('newInstance')->put('key1', 'key1 value');
+Cachly::instance('newInstance')->putValue('key1', 'key1 value');
 Cachly::instance('newInstance')->all(); //outputs
 
 /*
@@ -268,14 +268,14 @@ Array
 * yourOwnShortcut - see how to make own [shortcuts](#configure-your-own-adapter-with-shortcuts)
 
 ```php
-Cachly::sess('mySessionInstance')->put('key1', 'key1 value');
+Cachly::sess('mySessionInstance')->putValue('key1', 'key1 value');
 Cachly::sess('mySessionInstance')->all();
-Cachly::$sess->put('key1', 'key1 value');
+Cachly::$sess->putValue('key1', 'key1 value');
 Cachly::$sess->all();
 
-Cachly::mem('mySessionInstance')->put('key1', 'key1 value');
+Cachly::mem('mySessionInstance')->putValue('key1', 'key1 value');
 Cachly::mem('mySessionInstance')->all();
-Cachly::$mem->put('key1', 'key1 value');
+Cachly::$mem->putValue('key1', 'key1 value');
 Cachly::$mem->all();
 ....
 ```
