@@ -2,55 +2,70 @@
 
 namespace Infira\Cachly;
 
-use Infira\Cachly\options\RedisDriverOptions;
-use Infira\Cachly\options\MemcachedDriverOptions;
-use Infira\Cachly\options\DbDriverOptions;
-use Infira\Cachly\options\FileDriverOptions;
-use Wolo\ClassFarm\ClassFarm;
-use Wolo\Str;
+use Infira\Cachly\Adapter\SessionAdapter;
+use Infira\Cachly\Exception\InvalidArgumentException;
+use Infira\Cachly\options\DbAdapterOptions;
+use Infira\Cachly\options\FileSystemAdapterOptions;
+use Infira\Cachly\options\MemcachedAdapterOptions;
+use Infira\Cachly\options\RedisAdapterOptions;
+use Infira\Cachly\Support\Collection;
+use Infira\Cachly\Support\Helpers;
+use Symfony\Component\Cache\Adapter\AbstractAdapter;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+use Symfony\Component\Cache\Adapter\MemcachedAdapter;
+use Symfony\Component\Cache\Adapter\PdoAdapter;
+use Symfony\Component\Cache\Adapter\RedisAdapter;
 
 
 /**
- * @method static Cacher Collection(string $key) - Makes a cache collection
- * @method static void  each(callable $callback) - Call $callback for every item<br />$callback($value, $cacheKey)
- * @method static void  eachCollection(callable $callback) - Call $callback for every sub collection every item<br />$callback(Cacher ´$value, $cacheKey, $collecitonName)
- * @method static array  getCollections() - Get all current collections
- * @method static string  set(string|int $key, $value, $ttl = 0) - Set cache value, returns cacheID which was used to save $value
- * @method static DriverHelper getDriver() - Get instance currrent driver
- * @method static mixed  get(string|int $key, mixed $default = null) - Get cache item
- * @method static array  getMulti(array $keys) - Get multiple items by keys
- * @method static bool  exists(string|int $key) - Does cache item exists by key
- * @method static array  getRegex(string $pattern) - Get cache items by regular expression
- * @method static bool  isExpired(string|int $key) - Is cache item expired
- * @method static string|null|integer  expiresAt(string|int $key) - Tells when cache item expires: "expired", "never" or timestamp when will be expired, returns null when not exists
- * @method static bool  delete(string|int $key)  - Delete cache item
- * @method static bool  deleteRegex(string $pattern) - Delete by regular expression
- * @method static bool  deletedExpired()- Delete expired items from cache
- * @method static bool  flush() - Flush current instance/collection
- * @method static array  getItems() - Get all current instance/collection cache items
- * @method static void  debug() - Dumps current instance/collection items
- * @method static mixed  once(string|array|int $key, callable $callback, mixed $callbackArg1 = null, mixed $callbackArg2 = null, mixed $callbackArg3 = null, mixed $callbackArg_n = null) - Call $callback once per cache existance, result will be seted to cache
- * @method static mixed  onceForce(string|array|int $key, callable $callback, bool $forceSet, mixed $callbackArg1, mixed $callbackArg2, mixed $callbackArg3, mixed $callbackArg_n) - Call $callback once per $key existence or force it to call
- * @method static mixed  onceExpire(string|array|int $key, callable $callback, int|string $ttl, mixed $callbackArg1 = null, mixed $callbackArg2 = null, mixed $callbackArg3 = null, mixed $callbackArg_n = null) - Call $callback once per $key existence or when its expired
- * @method static array  getInstancesKeys() - Returns array of all current driver instance/collection keys
- * @method static array  getIDKeyPairs() - Get instance/collection cacheKey/cacheID pairs
- * @method static array  getIDS() - Get instance/collection cache IDS
- * @method static array  getKeys() - Get instance/collection cache keys
+ * @method static CacheInstance sub(string $key)
+ * @method static CacheInstance[]  getSubInstances()
+ * @method static void  each(callable $callback)
+ * @method static CacheInstance  putValue(string|int $key, $value, int|string $expires = 0)
+ * @method static mixed  getValue(string|int $key, mixed $default = null)
+ * @method static mixed  pipeInto(string|int $key, string $class, mixed $defaultValue = [])
+ * @method static array  getMultipleValues(array $keys)
+ * @method static bool  has(string|int $key)
+ * @method static Collection  filter(callable $callback)
+ * @method static Collection  map(callable $callback)
+ * @method static Collection  filterRegex(string $pattern)
+ * @method static bool  isExpired(string|int $key)
+ * @method static string|null|integer  expiresAt(string|int $key)
+ * @method static bool  forget(string|int $key)
+ * @method static bool  forgetByRegex(string $pattern)
+ * @method static bool  prune()
+ * @method static void  clear()
+ * @method static array  all()
+ * @method static mixed  once(mixed ...$keys, callable $callback) Execute $callback once by hash-sum of $parameters
+ * @method static array  getKeys()
+ * @method static AbstractAdapter  getAdapter()
+ * @see CacheInstance
  */
 class Cachly
 {
-    public static array $options = ['defaultDriver' => 'sess', 'redisOptions' => null, 'memcachedOptions' => null, 'dbOptions' => null, 'fileOptions' => null, 'keyPrefix' => 'production'];
+    public static ?AdaptersCollection $adapters = null;
+    private static CacheInstance $instance;
+    public static CacheInstance $sess;
+    public static CacheInstance $mem;
+    public static CacheInstance $db;
+    public static CacheInstance $redis;
+    public static CacheInstance $memCached;
+    public static CacheInstance $file;
 
-    public static DriverNode $Driver;
-    private static Cacher $DefaultDriverDefaultInstance;
-    private static string $hashAlgorithm = 'sha1';
+    public const DB = 'db';
+    public const FILE = 'file';
+    public const MEM = 'mem';
+    public const REDIS = 'redis';
+    public const MEM_CACHED = 'memCached';
+    public const SESS = 'sess';
+    public const DEFAULT_INSTANCE_NAME = 'cachly-production';
 
-    const DB = 'db';
-    const FILE = 'file';
-    const MEM = 'mem';
-    const REDIS = 'redis';
-    const RUNTIME_MEMORY = 'rm';
-    const SESS = 'sess';
+    public static array $options = [
+        'defaultAdapter' => self::SESS,
+        'memAdapter' => self::REDIS,
+        'defaultInstanceName' => self::DEFAULT_INSTANCE_NAME,
+        'cacheIDHashAlgorithm' => 'crc32b',
+    ];
 
     /**
      * Call default instance method
@@ -58,15 +73,14 @@ class Cachly
      * @param $method
      * @param $args
      * @return mixed
-     * @throws CachlyException
      */
-    final public static function __callStatic($method, $args)
+    public static function __callStatic($method, $args)
     {
-        if (self::$DefaultDriverDefaultInstance === null) {
-            self::error("Cachly default driver is not set, use Cachly::setDefaultDriver");
+        if(self::$instance === null) {
+            self::$instance = static::instance();
         }
 
-        return self::$DefaultDriverDefaultInstance->$method(...$args);
+        return self::$instance->$method(...$args);
     }
 
     /**
@@ -74,168 +88,19 @@ class Cachly
      *
      * @param array $options
      */
-    final public static function init(array $options = []): void
+    public static function configure(array $options = []): void
     {
-        self::$Driver = new DriverNode();
-        if (isset($options['defaultDriver'])) {
-            self::setDefaultDriver($options['defaultDriver']);
+        self::$adapters = new AdaptersCollection();
+        self::$options = array_merge(self::$options, $options);
+        if(isset(self::$options['cacheIDHashAlgorithm'])) {
+            $algo = self::$options['cacheIDHashAlgorithm'];
+            if(!in_array($algo, hash_algos(), true)) {
+                throw new InvalidArgumentException("Unknown hashing algorithm('$algo)'");
+            }
+            self::$options['cacheIDHashAlgorithm'] = $algo;
         }
     }
 
-    /**
-     * Check is cachly initialized
-     *
-     * @return bool
-     */
-    public static function isInitialized(): bool
-    {
-        return (bool)self::$Driver;
-    }
-
-    public static function checkInitStatus()
-    {
-        if (!self::isInitialized()) {
-            self::error("Cachly is not initialized use Cachly::init");
-        }
-    }
-
-    /**
-     * Set default driver
-     *
-     * @param string $name
-     * @return void
-     */
-    final public static function setDefaultDriver(string $name): void
-    {
-        self::checkInitStatus();
-        self::$options['defaultDriver'] = $name;
-        self::$DefaultDriverDefaultInstance = self::di($name, 'cachly');
-    }
-
-    final public static function getDefaultDriver(): string
-    {
-        self::checkInitStatus();
-        if (!isset(self::$options['defaultDriver'])) {
-            self::error("Cachly default driver is not set");
-        }
-
-        return self::$options['defaultDriver'];
-    }
-
-    /**
-     * Set custom cache key prefix
-     * Cache keys are generated as follows  $yourCachePrefix . ";" .$_SERVER['HTTP_HOST'] . ";" . $_SERVER['DOCUMENT_ROOT'] . ";" . $this->driverName . $this->instanceName . $valueKey
-     * Defaults to production
-     *
-     * @param string $prefix
-     */
-    public static function setCacheKeyPrefix(string $prefix)
-    {
-        self::$options['keyPrefix'] = $prefix;
-    }
-
-    /**
-     * Add new driver
-     *
-     * @param string $driver - driver name
-     * @param string $propertyName - $DriverNode property name is used to accss this driver (Cachly::$Driver->myDriver....)
-     * @param callable $constructor
-     */
-    final public function addDriver(string $driver, string $propertyName, callable $constructor)
-    {
-        self::$Driver->register($driver, $propertyName, $constructor);
-    }
-
-    /**
-     * Set hashing algorithm
-     *
-     * @param string $name crc32,md5 or sha1(default)
-     * @return void
-     * @see https://stackoverflow.com/questions/3665247/fastest-hash-for-non-cryptographic-uses/5021846
-     */
-    final public static function setHashingAlgorithm(string $name): void
-    {
-        if (!in_array($name, ['crc32', 'md5', 'sha1'])) {
-            self::error("Unknown hashing algorythm");
-        }
-        self::$hashAlgorithm = $name;
-    }
-
-    /**
-     * Configure redis driver
-     *
-     * @param RedisDriverOptions $options
-     * @throws \Error
-     * @see https://github.com/phpredis/phpredis
-     */
-    final public static function configRedis(RedisDriverOptions &$options)
-    {
-        if ($options === null) {
-            $options = new RedisDriverOptions();
-        }
-        if ($options->client === null and !$options->host) {
-            self::error('Fill client property with Redis object or (user,host,port) properties to make inner mysql connection');
-        }
-        self::$options['redisOptions'] = $options;
-    }
-
-    /**
-     * Configure memcached driver
-     *
-     * @param MemcachedDriverOptions $options
-     * @see https://www.php.net/manual/en/book.memcached.php
-     */
-    final public static function configureMemcached(MemcachedDriverOptions $options)
-    {
-        if ($options === null) {
-            $options = new MemcachedDriverOptions();
-        }
-        if ($options->client === null and !$options->host) {
-            self::error('Fill client property with Memcached object or (host,port) properties to make inner mysql connection');
-        }
-        self::$options['memcachedOptions'] = $options;
-    }
-
-    /**
-     * Configure database driver
-     *
-     * @param DbDriverOptions $options
-     * @throws \Error
-     * @see https://www.php.net/manual/en/book.mysqli.php
-     */
-    final public static function configureDb(DbDriverOptions $options)
-    {
-        if ($options === null) {
-            $options = new DbDriverOptions();
-        }
-        if ($options->client === null and !$options->host) {
-            self::error('Fill client property with mysqli object or (user,password,host,port) properties to make inner mysql connection');
-        }
-        self::$options['dbOptions'] = $options;
-    }
-
-    /**
-     * Configure file driver
-     *
-     * @param FileDriverOptions $options
-     */
-    final public static function configureFile(FileDriverOptions $options)
-    {
-        if ($options === null) {
-            $options = new FileDriverOptions();
-        }
-        self::$options['fileOptions'] = $options;
-    }
-
-    final public static function isConfigured(string $driver): bool
-    {
-        self::checkInitStatus();
-        if (!Cachly::$Driver->isConstructed($driver)) {
-            return false;
-        }
-
-        return Cachly::$Driver->get($driver)::isConfigured();
-    }
 
     /**
      * Get stored option value
@@ -243,151 +108,242 @@ class Cachly
      * @param string $name
      * @return mixed
      */
-    final public static function getOpt(string $name)
+    public static function getOpt(string $name): mixed
     {
-        if (!array_key_exists($name, self::$options)) {
-            self::error("option '$name' not found");
+        if(!array_key_exists($name, self::$options)) {
+            throw new InvalidArgumentException("option '$name' not found");
         }
 
         return self::$options[$name];
     }
 
-    /**
-     * Shortcut to default driver instance cacher
-     *
-     * @param string $instance
-     * @return Cacher
-     */
-    final public static function instance(string $instance = 'cachly'): Cacher
+    public static function hasOpt(string $name): bool
     {
-        if ($instance == 'cachly') {
-            return self::$DefaultDriverDefaultInstance;
+        return array_key_exists($name, self::$options);
+    }
+
+    public static function getDefaultInstanceName(): string
+    {
+        if(!static::hasOpt('defaultInstanceName')) {
+            return static::DEFAULT_INSTANCE_NAME;
         }
 
-        return self::di(self::$options['defaultDriver'], $instance);
+        return self::getOpt('defaultInstanceName');
+    }
+
+    public static function setDefaultAdapter(string $name): void
+    {
+        self::$options['defaultAdapter'] = $name;
+    }
+
+    public static function setPropertyInstances(array $properties): void
+    {
+        foreach($properties as $property => $createInstance) {
+            self::$$property = $createInstance();
+        }
     }
 
     /**
-     * Shortcut to builtin database driver cacher
-     *
-     * @param string $instance
-     * @return Cacher
+     * @param string $name
+     * @param callable|AbstractAdapter $constructor
      */
-    final public static function db(string $instance = 'cachly'): Cacher
+    public static function configureAdapter(string $name, callable|AbstractAdapter $constructor): void
     {
-        return self::di(self::DB, $instance);
+        if(!self::$adapters) {
+            throw new InvalidArgumentException('not initialized use Cachly::configure');
+        }
+        self::$adapters->register($name, $constructor);
     }
 
     /**
-     * Shortcut to builtin file driver cacher
+     * Configure session adapter
      *
-     * @param string $instance
-     * @return Cacher
+     * @see SessionAdapter
      */
-    final public static function file(string $instance = 'cachly'): Cacher
+    public static function configureSessionAdapter(callable|AbstractAdapter $constructor): void
     {
-        return self::di(self::FILE, $instance);
+        self::configureAdapter(static::SESS, $constructor);
     }
 
     /**
-     * Shortcut to builtin memcached driver cacher
+     * Configure redis adapter
      *
-     * @param string $instance
-     * @return Cacher
+     * @see https://symfony.com/doc/current/components/cache/adapters/redis_adapter.html
      */
-    final public static function mem(string $instance = 'cachly'): Cacher
+    public static function configureRedisAdapter(array|callable|RedisAdapter|RedisAdapterOptions $options): void
     {
-        return self::di(self::MEM, $instance);
+        if(is_array($options)) {
+            $options = new RedisAdapterOptions($options);
+        }
+        if($options instanceof RedisAdapterOptions) {
+            $constructor = static function($namespace) use ($options) {
+                $client = RedisAdapter::createConnection($options->get('dsn'), (array)$options);
+
+                return new RedisAdapter($client, $namespace, $options->getDefaultLifeTime());
+            };
+        }
+        else {
+            $constructor = $options;
+        }
+        self::configureAdapter(static::REDIS, $constructor);
     }
 
     /**
-     * Shortcut to builtin redis driver cacher
+     * Configure memcached adapter
      *
-     * @param string $instance
-     * @return Cacher
+     * @see https://symfony.com/doc/current/components/cache/adapters/memcached_adapter.html
      */
-    final public static function redis(string $instance = 'cachly'): Cacher
+    public static function configureMemcachedAdapter(array|callable|MemcachedAdapter|MemcachedAdapterOptions $options): void
     {
-        return self::di(self::REDIS, $instance);
+        if(is_array($options)) {
+            $options = new MemcachedAdapterOptions($options);
+        }
+        if($options instanceof MemcachedAdapterOptions) {
+            $constructor = static function($namespace) use ($options) {
+                $client = MemcachedAdapter::createConnection($options->get('dsn'), $options->getOptions());
+
+                return new MemcachedAdapter($client, $namespace, $options->getDefaultLifeTime());
+            };
+        }
+        else {
+            $constructor = $options;
+        }
+        self::configureAdapter(static::MEM_CACHED, $constructor);
     }
 
     /**
-     * Shortcut to builtin sesson driver cacher
+     * Configure database adapter
      *
-     * @param string $instance
-     * @return Cacher
+     * @see https://symfony.com/doc/current/components/cache/adapters/pdo_doctrine_dbal_adapter.html
      */
-    final public static function sess(string $instance = 'cachly'): Cacher
+    public static function configureDbAdapter(array|callable|PdoAdapter|DbAdapterOptions $options): void
     {
-        return self::di(self::SESS, $instance);
+        if(is_array($options)) {
+            $options = new DbAdapterOptions($options);
+        }
+        if($options instanceof DbAdapterOptions) {
+            $constructor = static function($namespace) use ($options) {
+                return new PdoAdapter($options->get('dsn'), $namespace, $options->getDefaultLifeTime(), [
+                    'db_table' => $options->get('table', 'cachly_cache'),
+                    'db_username' => $options->get('user'),
+                    'db_password' => $options->get('password')
+                ]);
+            };
+        }
+        else {
+            $constructor = $options;
+        }
+        self::configureAdapter(static::DB, $constructor);
     }
 
     /**
-     * Shortcut to builtin runtimememory driver cacher
-     *
-     * @param string $instance
-     * @return Cacher
+     * Configure file adapter
+     * @see https://symfony.com/doc/current/components/cache/adapters/filesystem_adapter.html
      */
-    final public static function rm(string $instance = 'cachly'): Cacher
+    public static function configureFileSystemAdapter(array|callable|FilesystemAdapter|FileSystemAdapterOptions $options): void
     {
-        return self::di(self::RUNTIME_MEMORY, $instance);
+        if(is_array($options)) {
+            $options = new FileSystemAdapterOptions($options);
+        }
+        if($options instanceof FileSystemAdapterOptions) {
+            $constructor = static function($namespace) use ($options) {
+                return new FilesystemAdapter($namespace, $options->getDefaultLifeTime(), $options->get('directory'));
+            };
+        }
+        else {
+            $constructor = $options;
+        }
+        self::configureAdapter(static::FILE, $constructor);
     }
 
     /**
-     * Shortcut to driver cacher instance by name
+     * Create cache instance with database adapter
      *
-     * @param string $driver - driver name
-     * @param string $instance
-     * @return Cacher|null
+     * @param string $namespace
+     * @return CacheInstance
      */
-    final public static function di(string $driver, string $instance = 'cachly'): ?Cacher
+    public static function db(string $namespace = self::DEFAULT_INSTANCE_NAME): CacheInstance
     {
-        return ClassFarm::instance(
-            "Cachly->$driver->$instance",
-            static function () use ($instance, $driver) {
-                self::checkInitStatus();
+        return self::instance($namespace, self::DB);
+    }
 
-                return new Cacher($instance, self::$Driver->get($driver));
+    /**
+     * Create cache instance with file adapter
+     *
+     * @param string $namespace
+     * @return CacheInstance
+     */
+    public static function file(string $namespace = self::DEFAULT_INSTANCE_NAME): CacheInstance
+    {
+        return self::instance($namespace, self::FILE);
+    }
+
+    /**
+     * Create cache instance with memory adapter
+     * Uses $options['memAdapter'] as adapter
+     *
+     * @param string $namespace
+     * @return CacheInstance
+     */
+    public static function mem(string $namespace = self::DEFAULT_INSTANCE_NAME): CacheInstance
+    {
+        return self::instance($namespace, self::MEM);
+    }
+
+    /**
+     * Create cache instance with redis adap
+     *
+     * @param string $namespace
+     * @return CacheInstance
+     */
+    public static function redis(string $namespace = self::DEFAULT_INSTANCE_NAME): CacheInstance
+    {
+        return self::instance($namespace, self::REDIS);
+    }
+
+    /**
+     * Create cache instance with memCached adapter
+     *
+     * @param string $namespace
+     * @return CacheInstance
+     */
+    public static function memCached(string $namespace = self::DEFAULT_INSTANCE_NAME): CacheInstance
+    {
+        return self::instance($namespace, self::MEM_CACHED);
+    }
+
+    /**
+     * Create cache instance with session adapter
+     *
+     * @param string $namespace
+     * @return CacheInstance
+     */
+    public static function sess(string $namespace = self::DEFAULT_INSTANCE_NAME): CacheInstance
+    {
+        return self::instance($namespace, self::SESS);
+    }
+
+    /**
+     * Create cache instance
+     *
+     * @param string $namespace
+     * @param string|null $adapterName - if null $options['defaultAdapter'] will be used
+     * @return CacheInstance
+     */
+    public static function instance(string $namespace = self::DEFAULT_INSTANCE_NAME, string $adapterName = null): CacheInstance
+    {
+        $adapterName = $adapterName ?: static::getOpt('defaultAdapter');
+        $namespace .= '-' . static::getDefaultInstanceName();
+
+        return Helpers::once(
+            'instance', $adapterName, $namespace,
+            static function() use ($namespace, $adapterName) {
+                if(!self::$adapters) {
+                    throw new InvalidArgumentException('not initialized use Cachly::configure');
+                }
+
+                return new CacheInstance($namespace, $adapterName, self::$adapters->get($adapterName, $namespace));
             });
     }
-
     ####################### Start of helpers
-
-    /**
-     * @param string $msg
-     * @param null $extra
-     * @throws \Infira\Cachly\CachlyException
-     */
-    public static function error(string $msg, $extra = null)
-    {
-        throw new CachlyException($msg, $extra);
-    }
-
-    public static function genHashKey(string $driver, ?string $instance, ?string $key): string
-    {
-        $host = $_SERVER['HTTP_HOST'] ?? '';
-        $docRoot = $_SERVER['DOCUMENT_ROOT'] ?? '';
-
-        return self::getOpt('keyPrefix') . ';' . $host . ";" . $docRoot . ";" . $driver . $instance . $key;
-    }
-
-    public static function hash(string $hashable)
-    {
-        $method = self::$hashAlgorithm;
-        $hash = $method($hashable);
-        /*
-         * Make sure that cacheIDS always starts with a letter
-         * https://stackoverflow.com/questions/18797251/notice-unknown-skipping-numeric-key-1-in-unknown-on-line-0
-         * Just in caselets to all the cacheIDS prefix
-         */
-
-        //$hash = 'c' . $hash;
-
-        return $hash;
-    }
-
-    public static function generateCacheID(...$var): string
-    {
-        return hash("crc32b", Str::hashable(...$var));
-    }
 }

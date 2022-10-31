@@ -1,6 +1,6 @@
 {
   "name": "infira/cachly",
-  "description": "Comprehensive cache drivers for php",
+  "description": "Quick shortcuts to https://github.com/symfony/cache caching solution",
   "license": "MIT",
   "authors": [
     {
@@ -10,14 +10,15 @@
   ],
   "autoload": {
     "psr-4": {
-      "Infira\\Cachly\\options\\": "src/options",
-      "Infira\\Cachly\\driver\\": "src/driver",
       "Infira\\Cachly\\": "src/"
     }
   },
   "minimum-stability": "dev",
   "prefer-stable": true,
   "require": {
-    "infira/wolo": "dev-main"
+    "php": ">=8.1",
+    "infira/wolo": "v1.0",
+    "symfony/filesystem": "^6.1",
+    "symfony/cache": "^6.1"
   }
 }

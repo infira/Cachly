@@ -1,329 +1,234 @@
 # Cachly
 
-Comprehensive cachly library provides an unified cache drivers for caching key-value data. It is released under the [MIT licence](https://github.com/infira/Cachly/blob/master/LICENCE.md). Drivers:
+Quick shortcuts to [Symfony](https://github.com/symfony/cache) caching solution  <br>
+It is released under the [MIT licence](https://github.com/infira/Cachly/blob/master/LICENCE.md). Drivers:
 
-* Database (mysql)
-* File
+* Database (PDO)
+* FileSystem
 * [Memcached](https://www.php.net/manual/en/book.memcached.php)
 * [Redis](https://github.com/phpredis/phpredis)
-* RuntimeMemory
 * Session
 
-You can comment, offer changes, otherwise contribute [here on github](https://github.com/infira/Cachly/issues), or ask questions to gen@infira.ee
+You can comment, offer changes, otherwise contribute [here on GitHub](https://github.com/infira/Cachly/issues), or ask questions to gen@infira.ee
 
 # Table of contents
 
-1. [Installing/Configuring](#installingconfiguring)
-    * [Installation](#installation)
-    * [Configure](#configure)
-        * [Set default driver](#set-default-driver)
-        * [Configure redis driver](#configure-redis-driver)
-        * [Configure memcahced driver](#configure-memcached-driver)
-        * [Configure database driver](#configure-database-driver)
-1. [Customizing or making your own driver](#customizing-or-making-your-own-driver)
-1. [Examples](#usage-examples)
-    * [Default](#default-driver-and-default-instance-usage)
-    * [New instance](#using-a-new-instance-for-default-driver)
-    * [Driver shortcuts](#using-a-different-driver-instance)
-1. [Flushing and garbage collection](#flushing-and-garbace-collection)
-1. [Cachly:: methods](#cachly-methods)
-1. [Driver instance methods](#instance-methods)
-1. [Tips and tricks](#tips-and-tricks)
-    * [Keys & once](#key-and-once-usage)
-    * [Cool trick (once)](#once)
-    * [Fallback driver](#fallback-driver)
-
------
+1. [Installing/Configuring]
+    * [Basic configure](#basic-configure)
+        * [Configure PDO/database adapter adapter](#configure-pdodatabase-adapter-adapter)
+        * [Configure session adapter adapter](#configure-session-adapter-adapter)
+        * [Configure filesystem adapter](#configure-filesystem-adapter)
+        * [Configure memory adapter](#configure-memory-adapter)
+            * [Configure memcached adapter](#set-default-memory-adapter)
+            * [Configure redis adapter](#configure-redis-adapter)
+            * [Set default memory adapter ](#set-default-memory-adapter)
+        * [Configure your own adapter (basic)](#configure-your-own-adapter-basic)
+        * [Configure your own adapter (with shortcuts)](#configure-your-own-adapter-with-shortcuts)
+2. [Examples](#examples)
+    * [Basic](#default-adapter-with-default-instance)
+    * [New instance](#using-a-new-instance-for-default-adapter)
+    * [Adapter instance shortcuts](#adapter-instance-shortcuts)
 
 # Installing/Configuring
 
-## Installation
-
-Use [composer](http://getcomposer.org) to install the library:
-
-Add the library to your `composer.json` file in your project:
-
-```javascript
-{
-	"require": {
-		"infira/cachly": "dev-master"
-	}
-}
-```
-
-or terminal
+## Basic configure
 
 ```bash
 $ composer require infira/cachly
 ```
 
-## Configure
-
-You have the option to use several drives at once or only one. Its up your needs really.
-
-### NB!
-
-* if ```$options['fallbackDriver']``` is NULL then in case of error \Error is thrown. Read more about [fallback drivrers](#fallback-driver)
-* ```$options['afterConnect']```  - is optional
-
-### Set default driver
-
 ```php
-require_once "vendor/autoload.php";
+require_once 'vendor/autoload.php';
 
 use Infira\Cachly\Cachly;
 
-Cachly::init();
-Cachly::setDefaultDriver(Cachly::REDIS);
-/**
-* Cache keys are generated as follows  $yourCachePrefix . ";" .$_SERVER['HTTP_HOST'] . ";" . $_SERVER['DOCUMENT_ROOT'] . ";" . $this->driverName . $this->instanceName . $valueKey
-*/
-Cachly::setPreix('myCystomCacheKeyPrefix'); //defaults to 'production'
+Cachly::configure([
+    'defaultAdapter' => Cachly::SESS,
+    'memAdapter' => Cachly::REDIS,
+    'defaultInstanceName' => 'cachly-production',
+    'cacheIDHashAlgorithm' => 'crc32b'
+]);
 ```
 
+**Options**
 
+* `defaultAdapter` - adapter which will be used when accessing Cachly::$instanceMethod(...), ex. `Cachly::get('myCacheItem')`
+* `memAdapter` - adapter which will be used when accessing Cachly::mem()->$instanceMethod, ex. `Cachly::mem()->get('myCacheItem')`
+* `defaultInstanceName` - string which will be used to generate cacheIDS
+* `cacheIDHashAlgorithm` - hash Algorithm used in making cacheID's
+* `Cachly::setPropertyInstances` - for accessing Cachly::$sess instance
 
-### Configure redis driver
-
-#### Use builtin connector
-
-Example below Cachly will attempt to make connection to redis server
+## Configure PDO/database adapter adapter
 
 ```php
-$options               = new \Infira\Cachly\options\RedisDriverOptions();
-$options->fallbackDriver = Cachly::SESS;
-$options->password     = 'mypassword';
-$options->host         = 'localhost';
-$options->port         = 6379;
-/**
- * callable $options->afterConnect will be called after sucessful connection
- *
- * @param \Redis $redis
- * @see https://github.com/phpredis/phpredis
- */
-$options->afterConnect = function (\Redis $redis) //defaults to null
-{
-};
-Cachly::configRedis($options);
+Cachly::configureDbAdapter([
+    'dsn' => 'mysql:host=mysql.docker;dbname=cachly',
+    'table' => 'cachly_cache2',
+    'user' => 'root',
+    'password' => 'parool',
+]);
 ```
 
-#### Provide your own connection
+## Configure session adapter adapter
 
 ```php
-$options         = new \Infira\Cachly\options\RedisDriverOptions();
-$options->client = new Redis();
-$options->client->pconnect('redisHost', 'redisPort');
-$options->client->setOption(Redis::OPT_SERIALIZER, Redis::SERIALIZER_PHP);
+Cachly::configureSessionAdapter(static function($namespace) {
+    Session::init();
 
-if (!$options->client->auth('redisPassword'))
-{
-	throw new Error('Redis connection authentication failed');
-}
-Cachly::configureRedis($options);
-```
-
-### Configure memcached driver
-
-#### Use builtin connector
-
-```php
-$options                 = new \Infira\Cachly\options\MemcachedDriverOptions();
-$options->fallbackDriver = Cachly::SESS;
-$options->host           = 'localhost'; //defaults to localhost
-$options->port           = 11211; //defaults to 11211
-/**
- * callable $options->afterConnect will be called after sucessful connection
- *
- * @param \Memcached $memcached
- * @see https://www.php.net/manual/en/book.memcached.php
- */
-$options->afterConnect = function (\Memcached $memcached) //defaults to null
-{
-};
-Cachly::configureMemcached($options);
-```
-
-#### Provide your own connection
-
-```php
-$options         = new \Infira\Cachly\options\MemcachedDriverOptions();
-$options->client = new \Memcached();
-$options->client->addServer('memcachedHost', 12111);
-Cachly::configureMemcached($options);
-```
-
-### Configure database driver
-
-Db must have table for caching [table](https://github.com/infira/Cachly/blob/master/cachly_db_table.sql)
-If you want more pefromance use [ENGINE=MEMORY](https://mariadb.com/kb/en/memory-storage-engine/)
-
-#### Use builtin connector
-
-```php
-$options                 = new \Infira\Cachly\options\DbDriverOptions();
-$options->fallbackDriver = Cachly::SESS;
-$options->host           = 'localhost';
-$options->db             = 'myDb';
-$options->table          = 'cachly_cache';
-$options->user           = 'myUser';
-$options->password       = 'myPassword';
-$options->port           = 3306; //defaults to 3306
-/**
- * callable $options->afterConnect will be called after sucessful connection
- *
- * @param \mysqli $mysqli
- * @see https://www.php.net/manual/en/book.mysqli.php
- */
-$options->afterConnect = function (\mysqli $mysqli) //defaults to null
-{
-};
-Cachly::configureDb($options);
-```
-
-#### Provide your own connection
-
-```php
-$mysqli = new \mysqli('dbHost', 'dbUser', 'dbPass', 'dbName');
-Cachly::configureDb($mysqli);$options         = new \Infira\Cachly\options\DbDriverOptions();
-$options->client = $mysqli = new \mysqli('dbHost', 'dbUser', 'dbPass', 'dbName');
-Cachly::configureDb($options);
-```
-
-### Configure file driver
-
-```php
-$options         = new \Infira\Cachly\options\FileDriverOptions();
-$options->cachePath = 'path to folder where to save cache files';
-Cachly::configureFile($options);
-```
-
-# Customizing or making your own driver
-
-```php
-class myAwesomeDriverActualClass extends \Infira\Cachly\DriverHelper
-{
-	public function __construct()
-	{
-        $this->setDrover('myAwesomeDriver');
-		if (errorOccurs()) //if you want on internal error you can use fallback driver
-		{
-			$this->setFallbackDriver(Cachly::SESS);
-		}
-	}
-	
-	/**
-	 * @inheritDoc
-	 */
-	protected function doSet(string $CID, $data, int $expires = 0): bool
-	{
-		// TODO: Implement doSet() method.
-	}
-	
-	/**
-	 * @inheritDoc
-	 */
-	protected function doExists(string $CID): bool
-	{
-		// TODO: Implement doExists() method.
-	}
-	
-	/**
-	 * @inheritDoc
-	 */
-	protected function doGet(string $CID)
-	{
-		// TODO: Implement doGet() method.
-	}
-	
-	/**
-	 * @inheritDoc
-	 */
-	protected function doDelete(string $CID): bool
-	{
-		// TODO: Implement doDelete() method.
-	}
-	
-	/**
-	 * @inheritDoc
-	 */
-	protected function doGetItems(): array
-	{
-		// TODO: Implement doGetItems() method.
-	}
-	
-	/**
-	 * @inheritDoc
-	 */
-	protected function doFlush(): bool
-	{
-		// TODO: Implement doFlush() method.
-	}
-	
-	/**
-	 * @inheritDoc
-	 */
-	protected function doGc(): bool
-	{
-		// TODO: Implement doGc() method.
-	}
-}
-Cachly::addDriver('myAwesomeDriver','Awesome', function ()
-{
-	return new myAwesomeDriverActualClass();
+    return new \Infira\Cachly\Adapter\SessionAdapter($namespace);
 });
-Cachly::setDefaultDriver('myAwesomeDriver');
-
-Cachly::set("myKey", "value"); //uses myAwesomeDriver
-
-Cachly::di("myAwesomeDriver")->set("myKey", "value"); //uses myAwesomeDriver
-
 ```
 
-### Adding custom shortcuts
+## Configure filesystem adapter
 
 ```php
-class Cachly extends \Infira\Cachly\Cachly
+Cachly::configureFileSystemAdapter([
+    'directory' => __DIR__ . '/fileCache'
+]);
+```
+
+## Configure memory adapter
+
+### Configure memcached adapter
+
+```php
+Cachly::configureMemcachedAdapter([
+    'host' => 'memcached://my.server.com:11211',
+    'options' => [
+        //... see https://symfony.com/doc/current/components/cache/adapters/memcached_adapter.html#configure-the-options
+    ]
+]);
+```
+
+### Configure redis adapter
+
+```php
+Cachly::configureRedisAdapter([
+    'host' => 'redis://localhost:6379',
+    'options' => [
+        //... see https://symfony.com/doc/current/components/cache/adapters/redis_adapter.html#configure-the-options
+    ]
+]);
+```
+
+### Set default memory adapter
+
+```php
+Cachly::configure([
+     //...
+    'memAdapter' => Cachly::REDIS
+]);
+Cachly::setPropertyInstances([
+    Cachly::MEM => static fn() => Cachly::mem(),
+]);
+//now you can access
+Cachly::$sess->put(...)
+//or
+Cachly::sess('new instance')->put(...)
+```
+
+## Configure your own adapter (basic)
+
+@see https://symfony.com/doc/current/components/cache.html for more information
+
+```php
+Cachly::configureAdapter(
+    'myAdapter', function(string $namespace) {
+    return MyAwesomeAdapter($namespace);
+});
+//accessing instance
+Cachly::instance('cachly','myAdapter')->set('myKey','myValue');
+```
+
+## Configure your own adapter (with shortcuts)
+
+```php
+class MyCachly extends Cachly
 {
-	 /**
-     * @param string $instance
-     * @return \Infira\Cachly\Cacher
-     */
-	public static function awesome(string $instance = 'cachly'): \Infira\Cachly\Cacher
-	{
-		return self::di("myAwesomeDriver", $instance);
-	}
+    public static \Infira\Cachly\CacheInstance $myAdapter;
+
+    public static function configure(array $options = []): void
+    {
+        parent::configure($options);
+        Cachly::configureAdapter(
+            'myAdapter', function(string $namespace) {
+            return MyAwesomeAdapter($namespace);
+        });
+        static::$myAdapter = static::myAdapter(static::DEFAULT_INSTANCE_NAME);
+    }
+
+    public static function myAdapter(string $namespace = 'some-other-namespace'): \Infira\Cachly\CacheInstance
+    {
+        return static::instance($namespace, 'myAdapter')
+    }
 }
-//now instead of Cachly::di("myAwesomeDriver")->set("myKey", "value"); you can use
-Cachly::awesome()->set("myKey", "value");
+//now you can use
+MyCachly::configure();
+MyCachly::$myAdapter->set('myKey', 'value'); 
+//or creating new instance 
+MyCachly::myAdapter('new instance')->set('myKey', 'value');
 ```
 
-# Usage examples
-
-## Default driver and default instance usage
-
-Once default driver is configured you can use default methods for caching. Default driver vad defined earlier. See [more features](#methods)
+### Shortcuts
 
 ```php
-Cachly::set("myKey", "my Value", "+1 day");
+Cachly::setPropertyInstances([
+Cachly::SESS => static fn() => Cachly::sess(),
+Cachly::DB => static fn() => Cachly::db(),
+Cachly::FILE => static fn() => Cachly::file(),
+]);
+$Cachly::$sess->put(...);
+```
 
-if (Cachly::exists('myKey'))
+# Examples
+
+## Default adapter with default instance
+
+Once default adapter is configured you can use default methods for caching.
+
+```php
+Cachly::put('myKey', 'my Value', '+1 day');
+
+if (Cachly::has('myKey'))
 {
-	//yei its still exists
+	//yei, still exists
 	echo Cachly::get('myKey');
-	Cachly::delete('myKey');
+	Cachly::forget('myKey');
 }
+
+/**
+* @see https://symfony.com/doc/current/components/cache.html#basic-usage-psr-6
+ */
+Cachly::get('my_cache_key', function (\Infira\Cachly\Item\CacheItem $item) {
+    $item->expiresAfter(3600);
+
+    // ... do some HTTP request or heavy computations
+    $computedValue = 'foobar';
+
+    return $computedValue;
+});
+
+//add as many variables as you want as long last variable is callback
+Cachly::once('key1',$filters,$someOtherVariable, function (\Infira\Cachly\Item\CacheItem $item) {
+    $item->expiresAfter(3600);
+
+    // ... do some HTTP request or heavy computations
+    $computedValue = 'foobar';
+
+    return $computedValue;
+});
 
 //you can use also collections
-$MyCollection = Cachly::Collection('myCollectionName');
-$MyCollection->set('myKey1', 'value1');
-$MyCollection->set('myKey2', 'value2');
-$MyCollection->set('myKey3', 'value3');
-$MyCollectionSub = $MyCollection->Collection("subCollection");
-$MyCollectionSub->set('myKey1', 'value1');
-$MyCollectionSub->set('myKey2', 'value2');
-$MyCollectionSub->set('myKey3', 'value3');
-$MyCollection->get("myKey3"); //outputs value3
-$MyCollection->debug(); //outputs
+$MyCollection = Cachly::sub('myCollectionName');
+$MyCollection->put('myKey1', 'value1');
+$MyCollection->put('myKey2', 'value2');
+$MyCollection->put('myKey3', 'value3');
+$MyCollectionSub = $MyCollection::sub('subCollection');
+$MyCollectionSub->put('myKey1', 'value1');
+$MyCollectionSub->put('myKey2', 'value2');
+$MyCollectionSub->put('myKey3', 'value3');
+$MyCollection->get('myKey3'); //outputs value3
+$MyCollection->all(); //outputs
 /*
 Array
 (
@@ -332,8 +237,8 @@ Array
     [myKey3] => value
 )
 */
-$MyCollection->Collection("subCollection")->get("myKey3"); //outputs value3
-$MyCollectionSub->debug(); //outputs
+$MyCollection::sub('subCollection')->get('myKey3'); //outputs value3
+$MyCollectionSub->all(); //outputs
 /*
 Array
 (
@@ -344,11 +249,11 @@ Array
 */
 ```
 
-## Using a new instance for default driver
+## Using a new instance for default adapter
 
 ```php
-Cachly::instance('newInstance')->set("key1", "key1 value");
-Cachly::instance('newInstance')->debug(); //outputs
+Cachly::instance('newInstance')->put('key1', 'key1 value');
+Cachly::instance('newInstance')->all(); //outputs
 
 /*
 Array
@@ -358,1202 +263,19 @@ Array
 */
 ```
 
-## Using a different driver instance
+## Adapter instance shortcuts
 
-* [db](#db)
-* [file](#file)
-* [mem](#mem)
-* [redis](#redis)
-* [rm](#rm)
-* [sess](#sess)
-* yourOwnShortcut - see how to make own [shortcuts](#adding-custom-shortcuts)
+* yourOwnShortcut - see how to make own [shortcuts](#configure-your-own-adapter-with-shortcuts)
 
 ```php
-Cachly::sess('mySessionInstance')->set("key1", "key1 value");
-Cachly::sess('mySessionInstance')->debug();
+Cachly::sess('mySessionInstance')->put('key1', 'key1 value');
+Cachly::sess('mySessionInstance')->all();
+Cachly::$sess->put('key1', 'key1 value');
+Cachly::$sess->all();
+
+Cachly::mem('mySessionInstance')->put('key1', 'key1 value');
+Cachly::mem('mySessionInstance')->all();
+Cachly::$mem->put('key1', 'key1 value');
+Cachly::$mem->all();
+....
 ```
-
-# Flushing and garbace collection
-
-## Garbage collction
-
-Redis and memcached will do their own garbage collection by server side. <br>
-To initiate garbage collection manually
-
-```php
-Cachly::$Driver->DriverName->gc();
-```
-
-## Flushing
-
-```php
-Cachly::flush();                                                     //flushes default driver default instance data
-Cachly::instance("myInstance")->flush();                             //flushes default driver "myInstance" instance data, including collections
-Cachly::Collection("myCollection")->flush();                         //flushes default driver default instance "myCollection" collection data
-Cachly::instance("myInstance")->Collection("myCollection")->flush(); //flushes default driver "myInstance" instance "myCollection" collection data
-Cachly::sess("myInstance")->Collection("myCollection")->flush();     //flushes session driver "myInstance" "myCollection" collection data
-Cachly::$Driver->Sess->flush();                                      //flushes session driver all data
-Cachly::$Driver->Awesome->flush();                                   //flushes custom driver Awesome all data
-```
-
-# Cachly methods
-
-| Name | Description |
-|------|-------------|
-|[setDefaultDriver](#setdefaultdriver)|Set default driver|
-|[getDefaultDriver](#getdefaultdriver)|Get default driver name|
-|[setHashingAlgorithm](#sethashingalgorithm)|Set default driver|
-|[configRedis](#configredis)|Configure redis driver (creates own client)|
-|[configureDb](#configuredb)|Configure database driver (creates own client)|
-|[configureFile](#configurefile)|Configure file driver|
-|[configureMemcached](#configurememcached)|Configure memcached driver (creates own client)|
-|[isConfigured](#isconfigured)|Check is driver configured|
-
-## Driver shortcuts
-
-|[instance](#instance)|Shortcut to default driver instance cacher| |[db](#db)|Shortcut to builtin database driver cacher| |[file](#file)|Shortcut to builtin file driver cacher| |[mem](#mem)|Shortcut to builtin memcachec driver cacher| |[redis](#redis)|Shortcut to builtin redis driver cacher|
-|[rm](#rm)|Shortcut to builtin runtimememory driver cacher| |[sess](#sess)|Shortcut to builtin session driver cacher| |[di](#di)|Shortcut to driver cacher instance by name|
-
-## Configuring
-
-### setDefaultDriver
-
-**Description**
-
-```php
-public static setDefaultDriver (string $name)
-```
-
-Set default driver
-
-**Parameters**
-
-* `(string) $name`
-
-**Return Values**
-
-`void`
-
-
-<hr />
-
-### getDefaultDriver
-
-**Description**
-
-```php
-public static getDefaultDriver ()
-```
-
-Get default driver name
-
-**Return Values**
-
-`string`
-
-
-<hr />
-
-### setHashingAlgorithm
-
-**Description**
-
-```php
-final public static setHashingAlgorithm (string $name)
-```
-
-Set hashing algorithm
-
-**Parameters**
-
-* `(string) $name`
-  : crc32,md5 or sha1(default) See - https://stackoverflow.com/questions/3665247/fastest-hash-for-non-cryptographic-uses/5021846
-
-**Return Values**
-
-`void`
-
-
-
-
-<hr />
-
-### configRedis
-
-**Description**
-
-```php
-final public static configRedis (array|\Redis $redis)
-```
-
-Configure redis driver
-
-**Parameters**
-
-* `(array|\Redis) $redis`
-  : - \Redis class or options array ['password'=>'', 'host'=>'localhost', 'port'=>6379, 'afterConnect'=>null|callable, 'fallbackDriver'=>null|string]
-
-**Return Values**
-
-`void`
-
-
-<hr />
-
-### configureDb
-
-**Description**
-
-```php
-final public static configureDb (array|\mysqli $db)
-```
-
-Configure database driver
-
-**Parameters**
-
-* `(array|\mysqli) $db`
-  : - \mysqli class or options array ['user'=>'', 'password'=>'', 'host'=>'localhost', 'port'=>'ini_get("mysqli.default_port")', 'db'=>'myDbName', 'table'=>'cachly_data', 'afterConnect'=>null|callable, 'fallbackDriver'=>null|string] <br />  
-  Leave port empty to use system configured mysql port (ini_get("mysqli.default_port"))
-
-**Return Values**
-
-`void`
-
-
-<hr />
-
-### configureFile
-
-**Description**
-
-```php
-final public static configureFile (string $path, string $fallbackDriver)
-```
-
-Configure file driver
-
-**Parameters**
-
-* `(string) $path`
-* `(string) $fallbackDriver`
-  : - in case of redis connection error use fallback driver
-
-**Return Values**
-
-`void`
-
-
-<hr />
-
-### configureMemcached
-
-**Description**
-
-```php
-final public static configureMemcached (array|\Memcached $memcached)
-```
-
-Configure memcached driver
-
-### isConfigured
-
-**Description**
-
-```php
-public static isConfigured (string $driver)
-```
-
-Check if $driver is configured
-
-**Parameters**
-
-* `(string) $instance`
-
-**Return Values**
-
-`bool
-
-
-
-
-<hr />
-
-
-
-**Parameters**
-
-* `(array|\Memcached) $memcached`
-  : - \Memcached class or options array ['host'=>'localhost', 'port'=>11211, 'afterConnect'=>null|callable, 'fallbackDriver'=>null|string]
-
-**Return Values**
-
-`void`
-
-
-<hr />
-
-## Driver isntance shortcuts
-
-### instance
-
-**Description**
-
-```php
-public static instance (string $instance = 'cachly')
-```
-
-Get default driver instance driver
-
-**Parameters**
-
-* `(string) $instance`
-
-**Return Values**
-
-`\Infira\Cachly\Cacher`
-
-
-
-
-<hr />
-
-### db
-
-**Description**
-
-```php
-public static db (string $instance = 'cachly')
-```
-
-Shortcut to builtin database driver cacher
-
-**Parameters**
-
-* `(string) $instance`
-
-**Return Values**
-
-`\Infira\Cachly\Cacher`
-
-
-
-
-<hr />
-
-### file
-
-**Description**
-
-```php
-public static file (string $instance = 'cachly')
-```
-
-Shortcut to builtin file driver cacher
-
-**Parameters**
-
-* `(string) $instance`
-
-**Return Values**
-
-`\Infira\Cachly\Cacher`
-
-
-
-
-<hr />
-
-### mem
-
-**Description**
-
-```php
-public static mem (string $instance = 'cachly')
-```
-
-Shortcut to builtin memcached driver cacher
-
-**Parameters**
-
-* `(string) $instance`
-
-**Return Values**
-
-`\Infira\Cachly\Cacher`
-
-
-
-
-<hr />
-
-### redis
-
-**Description**
-
-```php
-public static redis (string $instance = 'cachly')
-```
-
-Shortcut to builtin redis driver cacher
-
-**Parameters**
-
-* `(string) $instance`
-
-**Return Values**
-
-`\Infira\Cachly\Cacher`
-
-
-
-
-<hr />
-
-### rm
-
-**Description**
-
-```php
-public static rm (string $instance = 'cachly')
-```
-
-Shortcut to builtin runtimememory driver cacher
-
-**Parameters**
-
-* `(string) $instance`
-
-**Return Values**
-
-`\Infira\Cachly\Cacher`
-
-
-
-
-<hr />
-
-### sess
-
-**Description**
-
-```php
-public static sess (string $instance = 'cachly')
-```
-
-Shortcut to builtin session driver cacher
-
-**Parameters**
-
-* `(string) $instance`
-
-**Return Values**
-
-`\Infira\Cachly\Cacher`
-
-<hr />
-
-### di
-
-**Description**
-
-```php
-public static di (string $driver, string $instance = 'cachly')
-```
-
-Shortcut to driver cacher instance by name
-
-**Parameters**
-
-* `(string) $driver` - driver name
-* `(string) $instance` - instance name
-
-**Return Values**
-
-`\Infira\Cachly\Cacher`
-
-<hr />
-
-# Instance methods
-
-| Name | Description |
-|------|-------------|
-|[Collection](#collection)|Makes a cache collection|
-|[debug](#debug)|Dumps current instance/collection items|
-|[delete](#delete)|Delete cache item|
-|[deleteRegex](#deleteregex)|Delete by regular expression|
-|[deletedExpired](#deletedexpired)|Delete expired items from current instance/collection|
-|[each](#each)|Loops all items and and call $callback for every item<br />$callback($value,$cacheKey)|
-|[eachCollection](#eachcollection)|Call $callback for every collection<br />$callback($Colleciton,$collectionName)|
-|[exists](#exists)|Does cache item exists|
-|[expiresAt](#expiresat)|Tells when cache item expires|
-|[flush](#flush)|Flush data on current instance/collection|
-|[get](#get)|Get cache item|
-|[getDriver](#getdriver)|Get current driver|
-|[getCollections](#getcollections)|Get all current collections|
-|[getIDKeyPairs](#getidkeypairs)|Get instance/collection cacheKey/cacheID pairs|
-|[getIDS](#getids)|Get cache IDS|
-|[getItems](#getitems)|Get all current instance/collection or collection cache items|
-|[getKeys](#getkeys)|Get cache keys|
-|[getMulti](#getmulti)|Get multiple items by keys|
-|[getRegex](#getregex)|Get cache items by regular expression|
-|[isExpired](#isexpired)|Is cache item expired|
-|[key](#key)|Set key for further use|
-|[once](#once)|Call $callback once per $key existence
-All arguments after $callback will be passed to callable method|
-|[onceExpire](#onceexpire)|Call $callback once per $key existence or when its expired
-All arguments after $forceSet will be passed to callable method|
-|[onceForce](#onceforce)|Call $callback once per $key existence or force it to call
-All arguments after $forceSet will be passed to callable method|
-|[set](#set)|Set cache value|
-
-### Collection
-
-**Description**
-
-```php
-public Collection (string $key)
-```
-
-Makes a cache collection
-
-**Parameters**
-
-* `(string) $key`
-
-**Return Values**
-
-`\Driver`
-
-### debug
-
-**Description**
-
-```php
-public debug (void)
-```
-
-Dumps current instance/collection items
-
-**Parameters**
-
-`This function has no parameters.`
-
-**Return Values**
-
-`void`
-
-
-
-
-<hr />
-
-### delete
-
-**Description**
-
-```php
-public delete (string $key = '')
-```
-
-Delete cache item
-
-**Parameters**
-
-* `(string) $key` - cache key, if is empty then try to use key setted by key() method
-
-**Return Values**
-
-`bool`
-
-
-
-
-<hr />
-
-### deleteRegex
-
-**Description**
-
-```php
-public deleteRegex (string $pattern)
-```
-
-Delete by regular expression
-
-**Parameters**
-
-* `(string) $pattern`
-
-**Return Values**
-
-`bool`
-
-
-
-
-<hr />
-
-### deletedExpired
-
-**Description**
-
-```php
-public deletedExpired (void)
-```
-
-Delete expired items from current instance/collection
-
-**Parameters**
-
-`This function has no parameters.`
-
-**Return Values**
-
-`bool`
-
-
-
-
-<hr />
-
-### each
-
-**Description**
-
-```php
-public each (callable $callback)
-```
-
-Loots all items and and call $callback for every item<br />$callback($value,$cacheKey)
-
-**Parameters**
-
-* `(callable) $callback`
-
-**Return Values**
-
-`void`
-
-
-
-
-<hr />
-
-### eachCollection
-
-**Description**
-
-```php
-public eachCollection (callable $callback)
-```
-
-Call $callback for every collection<br />$callback($Colleciton,$collectionName)
-
-**Parameters**
-
-* `(callable) $callback`
-
-**Return Values**
-
-`void`
-
-
-
-
-<hr />
-
-### exists
-
-**Description**
-
-```php
-public exists (string $key = '')
-```
-
-Does cache item exists
-
-**Parameters**
-
-* `(string) $key` - cache key, if is empty then try to use key setted by key() method
-
-**Return Values**
-
-`bool`
-
-
-
-
-<hr />
-
-### expiresAt
-
-**Description**
-
-```php
-public expiresAt (string $key = '')
-```
-
-Tells when cache item expires
-
-**Parameters**
-
-* `(string) $key` - cache key, if is empty then try to use key setted by key() method
-
-**Return Values**
-
-`string|null|int`
-
-> - "expired","never" or timestamp when will be expired, returns null when not exists
-
-
-<hr />
-
-### flush
-
-**Description**
-
-```php
-public flush (void)
-```
-
-Flush data on current instance/collection
-
-**Parameters**
-
-`This function has no parameters.`
-
-**Return Values**
-
-`bool`
-
-
-
-
-<hr />
-
-### get
-
-**Description**
-
-```php
-public get (string $key, mixed $returnOnNotExists)
-```
-
-Get cache item
-
-**Parameters**
-
-* `(string) $key` - cache key, if is empty then try to use key setted by key() method
-* `(mixed) $returnOnNotExists`
-  : - return that when item is not found
-
-**Return Values**
-
-`mixed`
-
-
-
-
-<hr />
-
-### getDriver
-
-**Description**
-
-```php
-public getDriver (void)
-```
-
-Get current driver
-
-**Parameters**
-
-`This function has no parameters.`
-
-**Return Values**
-
-`\Infira\Cachly\DriverHelper`
-
-
-
-
-<hr />
-
-### getCollections
-
-**Description**
-
-```php
-public getCollections (void)
-```
-
-Get all current collections
-
-**Parameters**
-
-`This function has no parameters.`
-
-**Return Values**
-
-`array`
-
-
-
-
-<hr />
-
-### getIDKeyPairs
-
-**Description**
-
-```php
-public getIDKeyPairs (void)
-```
-
-Get instance/collection cacheKey/cacheID pairs
-
-**Parameters**
-
-`This function has no parameters.`
-
-**Return Values**
-
-`array`
-
-
-
-
-<hr />
-
-### getIDS
-
-**Description**
-
-```php
-public getIDS (void)
-```
-
-Get cache IDS
-
-**Parameters**
-
-`This function has no parameters.`
-
-**Return Values**
-
-`array`
-
-
-
-
-<hr />
-
-### getItems
-
-**Description**
-
-```php
-public getItems (void)
-```
-
-Get all current instance/collection or collection cache items
-
-**Parameters**
-
-`This function has no parameters.`
-
-**Return Values**
-
-`array`
-
-
-
-
-<hr />
-
-### getKeys
-
-**Description**
-
-```php
-public getKeys (void)
-```
-
-Get cache keys
-
-**Parameters**
-
-`This function has no parameters.`
-
-**Return Values**
-
-`array`
-
-
-
-
-<hr />
-
-### getMulti
-
-**Description**
-
-```php
-public getMulti (array $keys)
-```
-
-Get multiple items by keys
-
-**Parameters**
-
-* `(array) $keys`
-  : - for examples ['key1','key2]
-
-**Return Values**
-
-`array`
-
-> - ['key1'=>'value1', 'key2'=>'value']
-
-
-<hr />
-
-### getRegex
-
-**Description**
-
-```php
-public getRegex (string $pattern)
-```
-
-Get cache items by regular expression
-
-**Parameters**
-
-* `(string) $pattern`
-
-**Return Values**
-
-`array`
-
-
-
-
-<hr />
-
-### isExpired
-
-**Description**
-
-```php
-public isExpired (string $key = '')
-```
-
-Is cache item expired
-
-**Parameters**
-
-* `(string) $key` - cache key, if is empty then try to use key setted by key() method
-
-**Return Values**
-
-`bool`
-
-
-
-
-<hr />
-
-### key
-
-**Description**
-
-```php
-public key (string|array|int $key = '')
-```
-
-Set key for further use Its a old way of [once](#once)
-
-**Parameters**
-
-* `(string|array|int) $key`
-
-**Return Values**
-
-`$this`
-
-#### Example
-
-I recommend to use [once](#once) but nonetheless it exists for backward compatibility
-
-```php
-function getMyStuff($arg1, $arg2, $arg3)
-{
-    $Collection = Cachly::key("my very long cache key", func_get_args());
-    if (!$Collection->exists())
-    {
-        //get stuff and save it
-        //
-        $Collection->set('', "stuff");
-    }
-    
-    return $Collection->get('');
-}
-function getMyStuffCollection($arg1, $arg2, $arg3)
-{
-    $Collection = Cachly::Collection("getMyStuff")->key("my very long cache key", func_get_args());
-    if (!$Collection->exists())
-    {
-        //get stuff and save it
-        //
-        $Collection->set('', "stuff");
-    }
-    
-    return $Collection->get('');
-}
-```
-
-<hr />
-
-### once
-
-**Description**
-
-```php
-public once (mixed $key, string|array|int $callback, mixed $callbackArg1, mixed $callbackArg2, mixed $callbackArg3, mixed $callbackArg_n)
-```
-
-Call $callback once per $key existence All arguments after $callback will be passed to callable method
-
-**Parameters**
-
-* `(mixed) $key` - cache key, if is empty then try to use key setted by key() method
-* `(string|array|int) $callback`
-  : method result will be setted to memory for later use
-* `(mixed) $callbackArg1`
-  : - this will pass to $callback as argument1
-* `(mixed) $callbackArg2`
-  : - this will pass to $callback as argument2
-* `(mixed) $callbackArg3`
-  : - this will pass to $callback as argument3
-* `(mixed) $callbackArg_n`
-  : - ....
-
-**Return Values**
-
-`mixed`
-
-> - $callback result
-
-#### Example
-
-Instade of doing this
-
-```php
-function getMyStuff()
-{
-	if (!Cachly::exists("myCache"))
-	{
-		$myStuff = ['getMyStuff from DB for example'];
-		
-		Cachly::set("myCache", $myStuff);
-	}
-	
-	return Cachly::get("myCache");
-}
-```
-
-you can do it Did you more beautifully
-
-```php
-function getMyStuff()
-{
-    return Cachly::once("myCache", function ()
-    {
-        $myStuff = ['getMyStuff from DB for example'];
-        
-        return $myStuff;
-    });
-}
-```
-
-Look at more [comprihensive example](#key-and-once-usage)
-<hr />
-
-### onceExpire
-
-**Description**
-
-```php
-public onceExpire (string|array|int $key, callable $callback, int|string $expires, mixed $callbackArg1, mixed $callbackArg2, mixed $callbackArg3, mixed $callbackArg_n)
-```
-
-Call $callback once per $key existence or when its expired All arguments after $forceSet will be passed to callable method
-
-**Parameters**
-
-* `(string|array|int) $key` - cache key, if is empty then try to use key setted by key() method
-* `(callable) $callback`
-* `(int|string) $expires`
-  : - when expires. (int)0 - forever,(string)"10 hours" - will be converted to time using strtotime(), (int)1596885301 - will tell Driver when to expire. If $expires is in the past, it will be converted as forever
-* `(mixed) $callbackArg1`
-  : - this will pass to $callback as argument1
-* `(mixed) $callbackArg2`
-  : - this will pass to $callback as argument2
-* `(mixed) $callbackArg3`
-  : - this will pass to $callback as argument3
-* `(mixed) $callbackArg_n`
-  : - ....
-
-**Return Values**
-
-`mixed|null`
-
-> - $callback result
-
-#### Example
-
-It will lives 10 days. If when its expired the onceExpire method will call your geting method again.
-
-```php
-function getMyStuff()
-{
-    return Cachly::onceExpire("myCache","+10 days", function ()
-    {
-        $myStuff = ['getMyStuff from DB for example'];
-        
-        return $myStuff;
-    });
-}
-```
-
-<hr />
-
-### onceForce
-
-**Description**
-
-```php
-public onceForce (string|array|int $key, callable $callback, bool $forceSet, mixed $callbackArg1, mixed $callbackArg2, mixed $callbackArg3, mixed $callbackArg_n)
-```
-
-Call $callback once per $key existence or force it to call All arguments after $forceSet will be passed to callable method
-
-**Parameters**
-
-* `(string|array|int) $key`
-* `(callable) $callback`
-* `(bool) $forceSet`
-  : - if its true then $callback will be called regardless of is the $key setted or not
-* `(mixed) $callbackArg1`
-  : - this will pass to $callback as argument1
-* `(mixed) $callbackArg2`
-  : - this will pass to $callback as argument2
-* `(mixed) $callbackArg3`
-  : - this will pass to $callback as argument3
-* `(mixed) $callbackArg_n`
-  : - ....
-
-**Return Values**
-
-`mixed|null`
-
-> - $callback result
-
-#### Example
-
-Its the weird on to understad, i think the example below explains it
-
-```php
-function getMyStuff()
-{
-    $forsSet = isset($_GET['resetMyCache']) ? true : false;
-    return Cachly::onceForce("myCache",$forsSet, function ()
-    {
-        $myStuff = ['getMyStuff from DB for example'];
-        
-        return $myStuff;
-    });
-}
-```
-
-<hr />
-
-### set
-
-**Description**
-
-```php
-public set (string $key, mixed $value, int|string $expires)
-```
-
-Set cache value
-
-**Parameters**
-
-* `(string) $key` - cache key, if is empty then try to use key setted by key() method
-  : - cache key - cache key, if is empty then try to use key setted by key() method
-* `(mixed) $value`
-  : - value to store
-* `(int|string) $expires`
-  : - when expires. (int)0 - forever,(string)"10 hours" - will be converted to time using strtotime(), (int)1596885301 - will tell Driver when to expire. If $expires is in the past, it will be converted as forever
-
-**Return Values**
-
-`string`
-
-> - returns cacheID which was used to save $value
-
-#### Example
-
-```php
-Cachly::set("key","value","10 days");    // will expire in 10 days
-Cachly::set("key","value","10");         // will expire in 10 seconds
-Cachly::set("key","value","10 minutes"); // will expire in 10 seconds
-```
-
-<hr />
-
-# Tips and tricks
-
-## once() usage
-
-Lets sey that you want to cache key depend on the values of the getMyStuff function arguments
-
-```php
-function getMyStuff($arg1, $arg2, $arg3)
-{
-    return Cachly::once(["my very long cache key", func_get_args()], function ()
-    {
-        return "stuff";
-    });
-}
-
-function getMyStuffCollection($arg1, $arg2, $arg3)
-{
-    return Cachly::Collection("getMyStuff")->once(["my very long cache key", func_get_args()], function ()
-    {
-        return "stuff";
-    });
-}
-```
-
-## Fallback driver
-
-When redis,memcached,db driver connection fails or some kind on other error then you can configure to dirver to fallback reliable driver. In example below when connection ro redis server fails it fallbacks to built in session driver
-
-```php
-//....
-$options['fallbackDriver'] = Cachly::SESS;
-Cachly::configRedis($options);
-```
-
-or you can use fallback to own driver
-
-```php
-$options['fallbackDriver'] = 'myAwesomeDriver';
-Cachly::configRedis($options);
-```
-
-Read more for [customizing drivers](#customizing-or-making-your-own-driver)
