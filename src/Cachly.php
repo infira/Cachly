@@ -76,7 +76,7 @@ class Cachly
      */
     public static function __callStatic($method, $args)
     {
-        if(self::$instance === null) {
+        if(!isset(self::$instance)) {
             self::$instance = static::instance();
         }
 
