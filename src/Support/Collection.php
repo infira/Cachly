@@ -14,13 +14,13 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * Execute a callback over each item.
      *
-     * @param callable $callback
+     * @param  callable  $callback
      * @return static
      */
     public function each(callable $callback): static
     {
-        foreach($this as $key => $item) {
-            if($callback($item, $key) === false) {
+        foreach ($this as $key => $item) {
+            if ($callback($item, $key) === false) {
                 break;
             }
         }
@@ -36,7 +36,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * Run a map over each of the items.
      *
-     * @param callable $callback
+     * @param  callable  $callback
      * @return static
      */
     public function map(callable $callback): static
@@ -51,7 +51,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * Determine if an item exists at an offset.
      *
-     * @param mixed $key
+     * @param  mixed  $key
      * @return bool
      */
     #[\ReturnTypeWillChange]
@@ -63,7 +63,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * Get an item at a given offset.
      *
-     * @param string|int $key
+     * @param  string|int  $key
      * @return mixed
      */
     #[\ReturnTypeWillChange]
@@ -75,14 +75,14 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * Set the item at a given offset.
      *
-     * @param string|int $key
-     * @param mixed $value
+     * @param  string|int  $key
+     * @param  mixed  $value
      * @return void
      */
     #[\ReturnTypeWillChange]
     public function offsetSet($key, mixed $value): void
     {
-        if(is_null($key)) {
+        if (is_null($key)) {
             $this->items[] = $value;
         }
         else {
@@ -93,7 +93,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * Unset the item at a given offset.
      *
-     * @param string|int $key
+     * @param  string|int  $key
      * @return void
      */
     #[\ReturnTypeWillChange]

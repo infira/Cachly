@@ -10,7 +10,7 @@ class FileSystemAdapterOptions extends AdapterOptions
     public ?string $directory = null;
 
     /**
-     * @param array $options
+     * @param  array  $options
      * @see https://symfony.com/doc/current/components/cache/adapters/filesystem_adapter.html
      */
     public function __construct(

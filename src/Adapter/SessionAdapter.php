@@ -9,7 +9,7 @@ class SessionAdapter extends AbstractAdapter
 {
     public function __construct(private readonly string $namespace = '')
     {
-        if(!isset($_SESSION)) {
+        if (!isset($_SESSION)) {
             throw new RuntimeException("Session adapter can't be used because session is not started. Use session_start()");
         }
         parent::__construct($namespace, 0);
@@ -23,8 +23,8 @@ class SessionAdapter extends AbstractAdapter
     {
         $values = [];
 
-        foreach($ids as $id) {
-            if($this->doHave($id)) {
+        foreach ($ids as $id) {
+            if ($this->doHave($id)) {
                 $values[$id] = $_SESSION[$this->namespace][$id];
             }
         }
@@ -34,7 +34,7 @@ class SessionAdapter extends AbstractAdapter
 
     protected function doHave(string $id): bool
     {
-        if(!array_key_exists($this->namespace, $_SESSION)) {
+        if (!array_key_exists($this->namespace, $_SESSION)) {
             return false;
         }
 
@@ -50,8 +50,8 @@ class SessionAdapter extends AbstractAdapter
 
     protected function doDelete(array $ids): bool
     {
-        foreach($ids as $id) {
-            if($this->doHave($id)) {
+        foreach ($ids as $id) {
+            if ($this->doHave($id)) {
                 unset($_SESSION[$this->namespace][$id]);
             }
         }
@@ -61,7 +61,7 @@ class SessionAdapter extends AbstractAdapter
 
     protected function doSave(array $values, int $lifetime): array|bool
     {
-        foreach($values as $id => $value) {
+        foreach ($values as $id => $value) {
             $_SESSION[$this->namespace][$id] = $value;
         }
 

@@ -7,16 +7,16 @@ use Infira\Cachly\Cachly;
 use Infira\Cachly\Exception\InvalidArgumentException;
 use Wolo\Globals\Globals;
 use Wolo\Globals\GlobalsCollection;
-use Wolo\Str;
+use Wolo\Hash;
 
 class Helpers
 {
     /**
      * Execute $callback once by hash-sum of $parameters
      *
-     * @param mixed ...$keys - will be used to generate hash sum ID for storing $callback result <br>
+     * @param  mixed  ...$keys  - will be used to generate hash sum ID for storing $callback result <br>
      * If $keys contains only callback then hash sum will be generated Closure signature
-     * @param callable $callback method result will be set to memory for later use
+     * @param  callable  $callback  method result will be set to memory for later use
      * @return mixed - $callback result
      * @noinspection PhpDocSignatureInspection
      * @noinspection PhpDocMissingThrowsInspection
@@ -28,7 +28,7 @@ class Helpers
     }
 
     /**
-     * @param string $key
+     * @param  string  $key
      * @return GlobalsCollection
      */
     public static function storage(string $key): GlobalsCollection
@@ -38,11 +38,11 @@ class Helpers
 
     public static function makeCacheID(mixed ...$key): string
     {
-        if(!$key) {
+        if (!$key) {
             throw new InvalidArgumentException('Cache key cannot be empty');
         }
 
         /** @noinspection PhpUnhandledExceptionInspection */
-        return Str::hash(Cachly::getOpt('cacheIDHashAlgorithm'), ...$key);
+        return Hash::make(Cachly::getOpt('cacheIDHashAlgorithm'), ...$key);
     }
 }

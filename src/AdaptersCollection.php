@@ -15,12 +15,12 @@ class AdaptersCollection
 
     public function get(string $name, string $namespace): AbstractAdapter
     {
-        if(!$this->isRegistered($name)) {
+        if (!$this->isRegistered($name)) {
             throw new InvalidArgumentException("adapter named($name) is not registered");
         }
         $adapter = &$this->storage[$name];
 
-        if($adapter->isConstructed) {
+        if ($adapter->isConstructed) {
             return $adapter->adapter;
         }
         $adapter->isConstructed = true;
@@ -31,7 +31,7 @@ class AdaptersCollection
 
     public function isConstructed(string $name): bool
     {
-        if(!isset($this->storage[$name])) {
+        if (!isset($this->storage[$name])) {
             return false;
         }
 
@@ -39,12 +39,12 @@ class AdaptersCollection
     }
 
     /**
-     * @param string $name
-     * @param callable|string $constructor
+     * @param  string  $name
+     * @param  callable|string  $constructor
      */
     public function register(string $name, callable|string $constructor): void
     {
-        if(isset($this->storage[$name])) {
+        if (isset($this->storage[$name])) {
             throw new InvalidArgumentException("adapter($name) is already registered");
         }
         $this->storage[$name] = (object)['constructor' => $constructor, 'isConstructed' => false, 'adapter' => null];

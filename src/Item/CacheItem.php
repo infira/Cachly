@@ -24,7 +24,7 @@ class CacheItem
     public function __call(string $name, array $arguments)
     {
         $ret = $this->cacheItem->$name(...$arguments);
-        if($ret instanceof \Symfony\Component\Cache\CacheItem) {
+        if ($ret instanceof \Symfony\Component\Cache\CacheItem) {
             return $this;
         }
 
@@ -41,7 +41,7 @@ class CacheItem
      */
     private function resetCacheItem(bool $set = null): void
     {
-        if($set === null) {
+        if ($set === null) {
             $set = !$this->adapter->hasItem($this->key);
         }
         $this->cacheItem = $this->adapter->getItem($this->key);

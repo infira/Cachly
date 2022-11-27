@@ -45,7 +45,7 @@ class ArrayItem extends CacheItem
 
     public function forget(string|int $key): static
     {
-        if($this->has($key)) {
+        if ($this->has($key)) {
             $array = $this->get();
             unset($array[$key]);
             $this->set($array);

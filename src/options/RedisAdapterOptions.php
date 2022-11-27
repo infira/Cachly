@@ -5,7 +5,7 @@ namespace Infira\Cachly\options;
 class RedisAdapterOptions extends AdapterOptions
 {
     /**
-     * @param array $options
+     * @param  array  $options
      * @see https://symfony.com/doc/current/components/cache/adapters/memcached_adapter.html#configure-the-connection
      */
     public function __construct(

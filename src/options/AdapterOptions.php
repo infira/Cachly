@@ -28,7 +28,7 @@ abstract class AdapterOptions
 
     public function get(string $key, mixed $default = null): mixed
     {
-        if(!$this->has($key)) {
+        if (!$this->has($key)) {
             return $default;
         }
 

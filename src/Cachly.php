@@ -76,7 +76,7 @@ class Cachly
      */
     public static function __callStatic($method, $args)
     {
-        if(!isset(self::$instance)) {
+        if (!isset(self::$instance)) {
             self::$instance = static::instance();
         }
 
@@ -86,15 +86,15 @@ class Cachly
     /**
      * Initializes Cachly
      *
-     * @param array $options
+     * @param  array  $options
      */
     public static function configure(array $options = []): void
     {
         self::$adapters = new AdaptersCollection();
         self::$options = array_merge(self::$options, $options);
-        if(isset(self::$options['cacheIDHashAlgorithm'])) {
+        if (isset(self::$options['cacheIDHashAlgorithm'])) {
             $algo = self::$options['cacheIDHashAlgorithm'];
-            if(!in_array($algo, hash_algos(), true)) {
+            if (!in_array($algo, hash_algos(), true)) {
                 throw new InvalidArgumentException("Unknown hashing algorithm('$algo)'");
             }
             self::$options['cacheIDHashAlgorithm'] = $algo;
@@ -105,12 +105,12 @@ class Cachly
     /**
      * Get stored option value
      *
-     * @param string $name
+     * @param  string  $name
      * @return mixed
      */
     public static function getOpt(string $name): mixed
     {
-        if(!array_key_exists($name, self::$options)) {
+        if (!array_key_exists($name, self::$options)) {
             throw new InvalidArgumentException("option '$name' not found");
         }
 
@@ -124,7 +124,7 @@ class Cachly
 
     public static function getDefaultInstanceName(): string
     {
-        if(!static::hasOpt('defaultInstanceName')) {
+        if (!static::hasOpt('defaultInstanceName')) {
             return static::DEFAULT_INSTANCE_NAME;
         }
 
@@ -138,18 +138,18 @@ class Cachly
 
     public static function setPropertyInstances(array $properties): void
     {
-        foreach($properties as $property => $createInstance) {
+        foreach ($properties as $property => $createInstance) {
             self::$$property = $createInstance();
         }
     }
 
     /**
-     * @param string $name
-     * @param callable|AbstractAdapter $constructor
+     * @param  string  $name
+     * @param  callable|AbstractAdapter  $constructor
      */
     public static function configureAdapter(string $name, callable|AbstractAdapter $constructor): void
     {
-        if(!self::$adapters) {
+        if (!self::$adapters) {
             throw new InvalidArgumentException('not initialized use Cachly::configure');
         }
         self::$adapters->register($name, $constructor);
@@ -172,11 +172,11 @@ class Cachly
      */
     public static function configureRedisAdapter(array|callable|RedisAdapter|RedisAdapterOptions $options): void
     {
-        if(is_array($options)) {
+        if (is_array($options)) {
             $options = new RedisAdapterOptions($options);
         }
-        if($options instanceof RedisAdapterOptions) {
-            $constructor = static function($namespace) use ($options) {
+        if ($options instanceof RedisAdapterOptions) {
+            $constructor = static function ($namespace) use ($options) {
                 $client = RedisAdapter::createConnection($options->get('dsn'), (array)$options);
 
                 return new RedisAdapter($client, $namespace, $options->getDefaultLifeTime());
@@ -195,11 +195,11 @@ class Cachly
      */
     public static function configureMemcachedAdapter(array|callable|MemcachedAdapter|MemcachedAdapterOptions $options): void
     {
-        if(is_array($options)) {
+        if (is_array($options)) {
             $options = new MemcachedAdapterOptions($options);
         }
-        if($options instanceof MemcachedAdapterOptions) {
-            $constructor = static function($namespace) use ($options) {
+        if ($options instanceof MemcachedAdapterOptions) {
+            $constructor = static function ($namespace) use ($options) {
                 $client = MemcachedAdapter::createConnection($options->get('dsn'), $options->getOptions());
 
                 return new MemcachedAdapter($client, $namespace, $options->getDefaultLifeTime());
@@ -218,11 +218,11 @@ class Cachly
      */
     public static function configureDbAdapter(array|callable|PdoAdapter|DbAdapterOptions $options): void
     {
-        if(is_array($options)) {
+        if (is_array($options)) {
             $options = new DbAdapterOptions($options);
         }
-        if($options instanceof DbAdapterOptions) {
-            $constructor = static function($namespace) use ($options) {
+        if ($options instanceof DbAdapterOptions) {
+            $constructor = static function ($namespace) use ($options) {
                 return new PdoAdapter($options->get('dsn'), $namespace, $options->getDefaultLifeTime(), [
                     'db_table' => $options->get('table', 'cachly_cache'),
                     'db_username' => $options->get('user'),
@@ -242,11 +242,11 @@ class Cachly
      */
     public static function configureFileSystemAdapter(array|callable|FilesystemAdapter|FileSystemAdapterOptions $options): void
     {
-        if(is_array($options)) {
+        if (is_array($options)) {
             $options = new FileSystemAdapterOptions($options);
         }
-        if($options instanceof FileSystemAdapterOptions) {
-            $constructor = static function($namespace) use ($options) {
+        if ($options instanceof FileSystemAdapterOptions) {
+            $constructor = static function ($namespace) use ($options) {
                 return new FilesystemAdapter($namespace, $options->getDefaultLifeTime(), $options->get('directory'));
             };
         }
@@ -259,7 +259,7 @@ class Cachly
     /**
      * Create cache instance with database adapter
      *
-     * @param string $namespace
+     * @param  string  $namespace
      * @return CacheInstance
      */
     public static function db(string $namespace = self::DEFAULT_INSTANCE_NAME): CacheInstance
@@ -270,7 +270,7 @@ class Cachly
     /**
      * Create cache instance with file adapter
      *
-     * @param string $namespace
+     * @param  string  $namespace
      * @return CacheInstance
      */
     public static function file(string $namespace = self::DEFAULT_INSTANCE_NAME): CacheInstance
@@ -282,7 +282,7 @@ class Cachly
      * Create cache instance with memory adapter
      * Uses $options['memAdapter'] as adapter
      *
-     * @param string $namespace
+     * @param  string  $namespace
      * @return CacheInstance
      */
     public static function mem(string $namespace = self::DEFAULT_INSTANCE_NAME): CacheInstance
@@ -293,7 +293,7 @@ class Cachly
     /**
      * Create cache instance with redis adap
      *
-     * @param string $namespace
+     * @param  string  $namespace
      * @return CacheInstance
      */
     public static function redis(string $namespace = self::DEFAULT_INSTANCE_NAME): CacheInstance
@@ -304,7 +304,7 @@ class Cachly
     /**
      * Create cache instance with memCached adapter
      *
-     * @param string $namespace
+     * @param  string  $namespace
      * @return CacheInstance
      */
     public static function memCached(string $namespace = self::DEFAULT_INSTANCE_NAME): CacheInstance
@@ -315,7 +315,7 @@ class Cachly
     /**
      * Create cache instance with session adapter
      *
-     * @param string $namespace
+     * @param  string  $namespace
      * @return CacheInstance
      */
     public static function sess(string $namespace = self::DEFAULT_INSTANCE_NAME): CacheInstance
@@ -326,24 +326,27 @@ class Cachly
     /**
      * Create cache instance
      *
-     * @param string $namespace
-     * @param string|null $adapterName - if null $options['defaultAdapter'] will be used
+     * @param  string  $namespace
+     * @param  string|null  $adapterName  - if null $options['defaultAdapter'] will be used
      * @return CacheInstance
      */
     public static function instance(string $namespace = self::DEFAULT_INSTANCE_NAME, string $adapterName = null): CacheInstance
     {
         $adapterName = $adapterName ?: static::getOpt('defaultAdapter');
-        $namespace .= '-' . static::getDefaultInstanceName();
+        $namespace .= '-'.static::getDefaultInstanceName();
 
         return Helpers::once(
-            'instance', $adapterName, $namespace,
-            static function() use ($namespace, $adapterName) {
-                if(!self::$adapters) {
+            'instance',
+            $adapterName,
+            $namespace,
+            static function () use ($namespace, $adapterName) {
+                if (!self::$adapters) {
                     throw new InvalidArgumentException('not initialized use Cachly::configure');
                 }
 
                 return new CacheInstance($namespace, $adapterName, self::$adapters->get($adapterName, $namespace));
-            });
+            }
+        );
     }
     ####################### Start of helpers
 }

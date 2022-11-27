@@ -32,7 +32,7 @@ class AdapterManager
 
     public function getValue(string $id, mixed $default = null): mixed
     {
-        if(!$this->has($id)) {
+        if (!$this->has($id)) {
             return $default;
         }
 
@@ -55,8 +55,8 @@ class AdapterManager
     public function all(): array
     {
         $output = [];
-        foreach($this->getKeys() as $id => $key) {
-            if($this->has($id)) {
+        foreach ($this->getKeys() as $id => $key) {
+            if ($this->has($id)) {
                 $output[$key] = $this->getValue($id);
             }
         }
@@ -74,7 +74,7 @@ class AdapterManager
 
     public function registerKey(string $key, string $id): static
     {
-        if(!$this->keys->has($id)) {
+        if (!$this->keys->has($id)) {
             $this->keys->put($id, $key);
         }
 
@@ -83,16 +83,16 @@ class AdapterManager
 
     public function putValue(string $id, mixed $value, int|string $expires = 0): bool
     {
-        if(!$this->keys->has($id)) {
-            throw new InvalidArgumentException("id($id) key is not registered, use " . '$this->registerKey($id,$key)' . " to register");
+        if (!$this->keys->has($id)) {
+            throw new InvalidArgumentException("id($id) key is not registered, use ".'$this->registerKey($id,$key)'." to register");
         }
         $expiresIn = 0;
 
-        if(is_numeric($expires) && !empty($expires)) {
+        if (is_numeric($expires) && !empty($expires)) {
             $expiresIn = (int)$expires;
         }
-        elseif(is_string($expires) && !empty($expires)) {
-            if($expires[0] !== '+') {
+        elseif (is_string($expires) && !empty($expires)) {
+            if ($expires[0] !== '+') {
                 $expires = "+$expires";
             }
             $expiresIn = strtotime($expires);
@@ -103,11 +103,11 @@ class AdapterManager
         $node->t = $expiresIn;
 
         $item = $this->item($id);
-        if($expiresIn !== 0) {
+        if ($expiresIn !== 0) {
             $item->expiresAt(Date::of($expires)->getDriver());
         }
 
-        return $item->set($node)->save(function() {
+        return $item->set($node)->save(function () {
             $this->keys->save();
         });
     }
@@ -119,19 +119,19 @@ class AdapterManager
 
     public function isExpired(string $id): bool
     {
-        if(!$this->keys->has($id)) {
+        if (!$this->keys->has($id)) {
             return true;
         }
         $r = $this->expiration($id);
-        if($r === -1) {
+        if ($r === -1) {
             return true;
         }
 
-        if($r === 0) {
+        if ($r === 0) {
             return false;
         }
 
-        if(time() > $r) {
+        if (time() > $r) {
             return true;
         }
 
@@ -140,11 +140,11 @@ class AdapterManager
 
     public function expiration(string $id): int|string|null
     {
-        if(!$this->keys->has($id)) {
+        if (!$this->keys->has($id)) {
             throw new InvalidArgumentException("$this->namespace does not have id('$id)'");
         }
         $node = $this->item($id)->get();
-        if($node->t > 0 && time() > $node->t) {
+        if ($node->t > 0 && time() > $node->t) {
             return -1;
         }
 
@@ -156,7 +156,7 @@ class AdapterManager
      */
     public function forget(string $id): bool
     {
-        if(!$this->keys->has($id)) {
+        if (!$this->keys->has($id)) {
             return true;
         }
 
