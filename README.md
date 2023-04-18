@@ -122,9 +122,9 @@ Cachly::setPropertyInstances([
     Cachly::MEM => static fn() => Cachly::mem(),
 ]);
 //now you can access
-Cachly::$sess->putValue(...)
+Cachly::$sess->put(...)
 //or
-Cachly::sess('new instance')->putValue(...)
+Cachly::sess('new instance')->put(...)
 ```
 
 ## Configure your own adapter (basic)
@@ -177,7 +177,7 @@ Cachly::SESS => static fn() => Cachly::sess(),
 Cachly::DB => static fn() => Cachly::db(),
 Cachly::FILE => static fn() => Cachly::file(),
 ]);
-$Cachly::$sess->putValue(...);
+$Cachly::$sess->put(...);
 ```
 
 # Examples
@@ -187,7 +187,7 @@ $Cachly::$sess->putValue(...);
 Once default adapter is configured you can use default methods for caching.
 
 ```php
-Cachly::putValue('myKey', 'my Value', '+1 day');
+Cachly::put('myKey', 'my Value', '+1 day');
 
 if (Cachly::has('myKey'))
 {
@@ -220,13 +220,13 @@ Cachly::once('key1',$filters,$someOtherVariable, function (\Infira\Cachly\Item\C
 
 //you can use also collections
 $MyCollection = Cachly::sub('myCollectionName');
-$MyCollection->putValue('myKey1', 'value1');
-$MyCollection->putValue('myKey2', 'value2');
-$MyCollection->putValue('myKey3', 'value3');
+$MyCollection->put('myKey1', 'value1');
+$MyCollection->put('myKey2', 'value2');
+$MyCollection->put('myKey3', 'value3');
 $MyCollectionSub = $MyCollection::sub('subCollection');
-$MyCollectionSub->putValue('myKey1', 'value1');
-$MyCollectionSub->putValue('myKey2', 'value2');
-$MyCollectionSub->putValue('myKey3', 'value3');
+$MyCollectionSub->put('myKey1', 'value1');
+$MyCollectionSub->put('myKey2', 'value2');
+$MyCollectionSub->put('myKey3', 'value3');
 $MyCollection->getValue('myKey3'); //outputs value3
 $MyCollection->all(); //outputs
 /*
@@ -252,7 +252,7 @@ Array
 ## Using a new instance for default adapter
 
 ```php
-Cachly::instance('newInstance')->putValue('key1', 'key1 value');
+Cachly::instance('newInstance')->put('key1', 'key1 value');
 Cachly::instance('newInstance')->all(); //outputs
 
 /*
@@ -268,14 +268,14 @@ Array
 * yourOwnShortcut - see how to make own [shortcuts](#configure-your-own-adapter-with-shortcuts)
 
 ```php
-Cachly::sess('mySessionInstance')->putValue('key1', 'key1 value');
+Cachly::sess('mySessionInstance')->put('key1', 'key1 value');
 Cachly::sess('mySessionInstance')->all();
-Cachly::$sess->putValue('key1', 'key1 value');
+Cachly::$sess->put('key1', 'key1 value');
 Cachly::$sess->all();
 
-Cachly::mem('mySessionInstance')->putValue('key1', 'key1 value');
+Cachly::mem('mySessionInstance')->put('key1', 'key1 value');
 Cachly::mem('mySessionInstance')->all();
-Cachly::$mem->putValue('key1', 'key1 value');
+Cachly::$mem->put('key1', 'key1 value');
 Cachly::$mem->all();
 ....
 ```

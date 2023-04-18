@@ -32,7 +32,7 @@ class CacheInstance
     {
         $cKey = "$this->namespace.inherited__collection-$key";
         if (!$this->has($cKey)) {
-            $this->putValue($cKey, []);
+            $this->put($cKey, []);
         }
 
         return $this->createNewSubInstance($cKey);
@@ -98,12 +98,27 @@ class CacheInstance
      * @param  int|string  $expires  - when expires. (int)0 - forever,(string)"10 hours" -  will be converted to time using strtotime(), (int)1596885301 - will tell when to expire. If $expires is in the past, it will be converted as forever
      * @return static
      */
-    public function putValue(string|int $key, mixed $value, int|string $expires = 0): static
+    public function put(string|int $key, mixed $value, int|string $expires = 0): static
     {
         $id = Helpers::makeCacheID($key);
-        $this->manager->registerKey($key, $id)->putValue($id, $value, $expires);
+        $this->manager->registerKey($key, $id)->put($id, $value, $expires);
 
         return $this;
+    }
+
+    /**
+     * Renamed to put
+     *
+     * @param  string|int  $key
+     * @param  mixed  $value  - value to store
+     * @param  int|string  $expires  - when expires. (int)0 - forever,(string)"10 hours" -  will be converted to time using strtotime(), (int)1596885301 - will tell when to expire. If $expires is in the past, it will be converted as forever
+     * @return static
+     * @see self::put()
+     * @deprecated
+     */
+    public function putValue(string|int $key, mixed $value, int|string $expires = 0): static
+    {
+        return $this->put(...func_get_args());
     }
 
     /**
@@ -202,6 +217,7 @@ class CacheInstance
 
     /**
      * Delete cache item
+     *
      * @param  string|int|callable  $key  - $callable($cacheValue, $cacheKey):bool
      * @throws \Psr\Cache\InvalidArgumentException
      */
@@ -233,6 +249,7 @@ class CacheInstance
 
     /**
      * Delete expired items
+     *
      * @throws \Psr\Cache\InvalidArgumentException
      */
     public function prune(): void
@@ -246,6 +263,7 @@ class CacheInstance
 
     /**
      * Flush data on current instance/collection
+     *
      * @throws \Psr\Cache\InvalidArgumentException
      */
     public function clear(): void

@@ -21,7 +21,7 @@ use Symfony\Component\Cache\Adapter\RedisAdapter;
  * @method static CacheInstance sub(string $key)
  * @method static CacheInstance[]  getSubInstances()
  * @method static void  each(callable $callback)
- * @method static CacheInstance  putValue(string|int $key, $value, int|string $expires = 0)
+ * @method static CacheInstance  put(string|int $key, $value, int|string $expires = 0)
  * @method static mixed  getValue(string|int $key, mixed $default = null)
  * @method static mixed  pipeInto(string|int $key, string $class, mixed $defaultValue = [])
  * @method static array  getMultipleValues(array $keys)

@@ -81,7 +81,7 @@ class AdapterManager
         return $this;
     }
 
-    public function putValue(string $id, mixed $value, int|string $expires = 0): bool
+    public function put(string $id, mixed $value, int|string $expires = 0): bool
     {
         if (!$this->keys->has($id)) {
             throw new InvalidArgumentException("id($id) key is not registered, use ".'$this->registerKey($id,$key)'." to register");
@@ -110,6 +110,21 @@ class AdapterManager
         return $item->set($node)->save(function () {
             $this->keys->save();
         });
+    }
+
+    /**
+     * Renamed to put()
+     *
+     * @param  string  $id
+     * @param  mixed  $value
+     * @param  int|string  $expires
+     * @return bool
+     * @see self::putValue()
+     * @deprecated
+     */
+    public function putValue(string $id, mixed $value, int|string $expires = 0): bool
+    {
+        return $this->put(...func_get_args());
     }
 
     public function has(string $id): bool
