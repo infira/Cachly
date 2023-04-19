@@ -3,23 +3,35 @@
 namespace Infira\Cachly;
 
 use DateInterval;
-use DateTime;
 use DateTimeInterface;
 use Infira\Cachly\Exception\InvalidArgumentException;
 use Infira\Cachly\Support\CacheInstanceKeyManager;
 use Infira\Cachly\Support\Collection;
 use Infira\Cachly\Support\Helpers;
+use Psr\Cache\InvalidArgumentException as PsrInvalidArgumentExceptionContract;
 use Symfony\Component\Cache\Adapter\AbstractAdapter;
-use Symfony\Component\Cache\CacheItem;
-use Symfony\Contracts\Cache\CallbackInterface;
 
+/**
+ * @template TKey
+ * @template TValue
+ */
 class CacheInstance
 {
+    use CacheInstanceAdapterProxy;
+
     public CacheInstanceKeyManager $keys;
 
-    public function __construct(private readonly string $namespace, private readonly string $adapterName, protected AbstractAdapter $adapter)
-    {
+    public function __construct(
+        private readonly string $namespace,
+        private readonly string $adapterName,
+        protected AbstractAdapter $adapter
+    ) {
         $this->keys = new CacheInstanceKeyManager($this);
+    }
+
+    public function __destruct()
+    {
+        $this->keys->save();
     }
 
     /**
@@ -34,132 +46,152 @@ class CacheInstance
     }
 
     /**
-     * Set cache value
+     * Sets a cache value to be persisted later.
+     * Note: use self::commit() to save
      *
-     * @param  string|int  $key
+     * @example single pair set('key1', 'value1')
+     * @example set multiple key-value pair set(['key1'=> 'value1','key2' => 'value2'])
+     * @param  array<TKey,TValue>  $values
+     * @return array<TKey,CacheItem>
+     * @throws PsrInvalidArgumentExceptionContract
+     */
+    public function setMany(array $values): array
+    {
+        $keys = array_keys($values);
+
+        return array_map(
+            fn(mixed $value, string $key) => $this->set($key, $value),
+            $values,
+            $keys
+        );
+    }
+
+    /**
+     * Sets a cache value to be persisted later.
+     * Note: use self::commit() to save
+     *
+     * @param  string  $key
      * @param  mixed  $value  - value to store
-     * @param  int|string|DateTimeInterface|null  $expires  (int)0|null - forever,(string)"10 hours" -  will be converted to time using strtotime(), (int)1596885301 - will tell when to expire. If $expires is in the past, it will be converted as forever
-     * @return static
-     * @throws \Psr\Cache\InvalidArgumentException
+     * @return CacheItem
+     * @throws PsrInvalidArgumentExceptionContract
      */
-    public function put(string|int $key, mixed $value, int|string|DateTimeInterface|DateInterval|null $expires = null): static
+    public function set(string $key, mixed $value): CacheItem
     {
-        $this->keys->add($key)->save();
-        $this->get($key, function (CacheItem $item) use ($value, $expires) {
-            if (!empty($expires)) {
-                if ($expires instanceof DateInterval || is_int($expires)) {
-                    $item->expiresAfter($expires);
-                }
-                elseif ($expires instanceof DateTimeInterface) {
-                    $item->expiresAt($expires);
-                }
-                else {
-                    $item->expiresAt(new DateTime($expires));
-                }
-            }
-
-            return $value;
-        });
-
-        return $this;
-    }
-
-    public function getItem(string $key): CacheItem
-    {
-        return $this->adapter->getItem($key);
+        return $this->getItem($key)->set($value);
     }
 
     /**
-     * Fetches a value from the pool or computes it if not found.
+     * Put cache value to bool and persists a cache item immediately.
      *
-     * On cache misses, a callback is called that should return the missing value.
-     * This callback is given a PSR-6 CacheItemInterface instance corresponding to the
-     * requested key, that could be used e.g. for expiration control. It could also
-     * be an ItemInterface instance when its additional features are needed.
-     *
-     * @param  string  $key  The key of the item to retrieve from the cache
-     * @param  callable|CallbackInterface  $callback  Should return the computed value for the given key/item
-     *
-     * @return mixed
-     * @throws \Psr\Cache\InvalidArgumentException When $key is not valid or when $beta is negative
+     * @param  string  $key
+     * @param  mixed  $value  - value to store
+     * @param  int|string|DateTimeInterface|DateInterval|null  $expires  @see CacheItem::expires()
+     * @return CacheItem
+     * @throws PsrInvalidArgumentExceptionContract
+     * @throws \Exception
      */
-    public function get(string $key, callable|CallbackInterface $callback): mixed
+    public function put(string $key, mixed $value, int|string|DateTimeInterface|DateInterval|null $expires = null): CacheItem
     {
-        return $this->adapter->get($key, $callback);
+        $item = $this->set(...func_get_args())->expires($expires);
+        $item->commit();
+
+        return $item;
     }
 
     /**
-     * Execute $callback once by hash-sum of $keys
+     * @template TParams -  (...$keys,callable $callback)
+     * Execute $callback once by hash-sum of $keys method signature i
+     * @see https://github.com/infira/Cachly#using-method-arguments-as-key
      * Note: last parameter must be callable
      *
-     * @param  mixed  ...$keys  - will be used to generate hash sum ID for storing $callback result
-     * @param  callable  $callback  method result will be set to memory for later use
+     * @param  TParams  ...$params  - will be used to generate hash sum ID for storing $callback result
      * @return mixed - $callback result
+     * @throws PsrInvalidArgumentExceptionContract
      */
-    public function once(...$keys): mixed
+    public function once(...$params): mixed
     {
-        if (!$keys) {
+        if (!$params) {
             throw new InvalidArgumentException('parameters not defined');
         }
         /**
          * @var callable $callback
          */
-        $callback = $keys[array_key_last($keys)];
+        $callback = $params[array_key_last($params)];
         if (!is_callable($callback)) {
             throw new InvalidArgumentException('last parameter must be callable');
         }
         //if at least one key is provided then use only keys to make hashtable
-        if (count($keys) > 1) {
-            $keys = array_slice($keys, 0, -1);
+        if (count($params) <= 1) {
+            throw new InvalidArgumentException('Provide at least one non callable parameter');
         }
+        $hash = hash('crc32b', Helpers::makeKeyString(array_filter($params, static fn($key) => !is_callable($key))));
 
-        return $this->get(Helpers::getId($keys), $callback);
+        return $this->get('once.'.$hash, $callback);
     }
 
     /**
      * Get cache item value if not exists $default will be returned
      *
-     * @param  string|int  $key
+     * @param  string  $key
      * @param  mixed  $default
      * @return mixed
-     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws PsrInvalidArgumentExceptionContract
      */
-    public function getValue(string|int $key, mixed $default = null): mixed
+    public function getValue(string $key, mixed $default = null): mixed
     {
-        if (!$this->keys->has($key)) {
-            return $default;
-        }
-        if (!$this->adapter->hasItem($key)) {
+        if (!$this->has($key)) {
             return $default;
         }
 
-        return $this->getItem($key)->get();
+        return $this->adapter->getItem($key)->get();
+    }
+
+    /**
+     * @param  array  $keys
+     * @param  mixed|null  $default  - if default value is not set then on non-existing key will be not added
+     * @return array
+     * @throws PsrInvalidArgumentExceptionContract
+     */
+    public function getValues(array $keys, mixed $default = null): array
+    {
+        $hasDefaultValue = func_num_args() > 1;
+        $output = [];
+        foreach ($keys as $key) {
+            if ($hasDefaultValue) {
+                $output[$key] = $this->getValue($key, $default);
+            }
+            elseif ($this->has($key)) {
+                $output[$key] = $this->adapter->getItem($key)->get();
+            }
+        }
+
+        return $output;
     }
 
     /**
      * Does cache item exists
      *
-     * @param  string|int  $key
+     * @param  string  $key
      * @return bool
-     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws PsrInvalidArgumentExceptionContract
      */
-    public function has(string|int $key): bool
+    public function has(string $key): bool
     {
         if (!$this->keys->has($key)) {
             return false;
         }
 
-        return $this->adapter->hasItem($key);
+        return $this->adapter->getItem($key)->isHit();
     }
 
     /**
      * Is cache item expired
      *
-     * @param  string|int  $key
+     * @param  string  $key
      * @return bool
-     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws PsrInvalidArgumentExceptionContract
      */
-    public function isExpired(string|int $key): bool
+    public function isExpired(string $key): bool
     {
         if (!$this->keys->has($key)) {
             return true;
@@ -171,25 +203,34 @@ class CacheInstance
     /**
      * Delete cache item
      *
-     * @param  string|int|callable  $key  - $callable($cacheValue, $cacheKey):bool
-     * @throws \Psr\Cache\InvalidArgumentException
+     * @param  string|string[]|callable  $key  - $callable($cacheValue, $cacheKey):bool
+     * @return bool
+     * @throws PsrInvalidArgumentExceptionContract
      */
-    public function forget(string|int|callable $key): void
+    public function forget(string|array|callable $key): bool
     {
+        $deleteKeys = [];
         if (is_callable($key)) {
-            $this->each(function ($cacheValue, $cacheKey) use ($key) {
+            $this->each(function ($cacheValue, $cacheKey) use ($key, &$deleteKeys) {
                 if ($key($cacheValue, $cacheKey) === true) {
-                    $this->forget($cacheKey);
+                    $deleteKeys[] = $cacheKey;
                 }
             });
         }
-        else {
-            foreach ((array)$key as $k) {
-                $this->keys->forget($k);
-                $this->adapter->deleteItem($k);
-            }
+        elseif (is_array($key)) {
+            array_push($deleteKeys, ...array_values($key));
         }
-        $this->keys->save();
+        else {
+            $deleteKeys = (array)$key;
+        }
+
+        if (!$deleteKeys) {
+            return false;
+        }
+        $this->keys->forget($deleteKeys);
+
+        return $this->adapter->deleteItems($deleteKeys);
+        //$this->keys->save();
     }
 
     /**
@@ -197,7 +238,7 @@ class CacheInstance
      *
      * @param  string  $leyPattern
      * @return void
-     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws PsrInvalidArgumentExceptionContract
      */
     public function forgetByRegex(string $leyPattern): void
     {
@@ -207,7 +248,7 @@ class CacheInstance
     /**
      * Delete expired items
      *
-     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws PsrInvalidArgumentExceptionContract
      */
     public function prune(): void
     {
@@ -219,45 +260,47 @@ class CacheInstance
     }
 
     /**
-     * Flush data on current instance/collection
-     *
-     */
-    public function clear(): void
-    {
-        $this->adapter->clear($this->namespace);
-        $this->keys->clear()->save();
-    }
-
-    /**
      * Get cache keys
      *
      * @return array
+     * @throws PsrInvalidArgumentExceptionContract
      */
     public function getKeys(): array
     {
-        return array_values($this->keys->all());
-    }
-
-    /**
-     * Get all items
-     *
-     * @return array
-     */
-    public function all(): array
-    {
         $output = [];
-        foreach ($this->getKeys() as $key) {
+        $keys = $this->keys->all();
+        $isDirty = false;
+        foreach ($keys as $i => $key) {
             if ($this->adapter->hasItem($key)) {
-                $output[$key] = $this->getValue($key);
+                $output[] = $key;
             }
+            else {
+                unset($keys[$i]);
+                $isDirty = true;
+            }
+        }
+        if ($isDirty) {
+            $this->keys->set($keys);
         }
 
         return $output;
     }
 
     /**
+     * Get all items
+     *
+     * @return array
+     * @throws PsrInvalidArgumentExceptionContract
+     */
+    public function all(): array
+    {
+        return $this->getValues($this->getKeys());
+    }
+
+    /**
      * @alias self::all()
      * @return array
+     * @throws PsrInvalidArgumentExceptionContract
      */
     public function toArray(): array
     {
@@ -270,6 +313,7 @@ class CacheInstance
      *
      * @param  callable<string,mixed>  $callback
      * @return void
+     * @throws PsrInvalidArgumentExceptionContract
      */
     public function each(callable $callback): void
     {
@@ -282,6 +326,7 @@ class CacheInstance
      *
      * @param  callable<string,mixed>  $callback
      * @return Collection
+     * @throws PsrInvalidArgumentExceptionContract
      */
     public function map(callable $callback): Collection
     {
@@ -294,6 +339,7 @@ class CacheInstance
      *
      * @param  callable<string,mixed>  $callback
      * @return Collection
+     * @throws PsrInvalidArgumentExceptionContract
      */
     public function filter(callable $callback): Collection
     {
@@ -305,6 +351,7 @@ class CacheInstance
      *
      * @param  string  $keyPattern
      * @return Collection
+     * @throws PsrInvalidArgumentExceptionContract
      */
     public function filterRegex(string $keyPattern): Collection
     {
@@ -315,6 +362,7 @@ class CacheInstance
      * Collection values into Collection
      *
      * @return Collection
+     * @throws PsrInvalidArgumentExceptionContract
      */
     public function collect(): Collection
     {
@@ -324,25 +372,15 @@ class CacheInstance
     /**
      * Pass values the collection into a new class.
      *
-     * @param  string|int  $key
+     * @param  string  $key
      * @param  string  $class
      * @param  mixed  $defaultValue
      * @return mixed
-     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws PsrInvalidArgumentExceptionContract
      */
-    public function pipeInto(string|int $key, string $class, mixed $defaultValue = []): mixed
+    public function pipeInto(string $key, string $class, mixed $defaultValue = []): mixed
     {
         return new $class($this->getValue($key, $defaultValue));
-    }
-
-    public function getAdapter(): AbstractAdapter
-    {
-        return $this->adapter;
-    }
-
-    public function getAdapterName(): string
-    {
-        return $this->adapterName;
     }
 
     public function getNamespace(): string
@@ -353,17 +391,19 @@ class CacheInstance
     //region deprecated
 
     /**
-     * @param  string|int  $key
+     * @param  string  $key
      * @param  mixed  $value
      * @param  int|string|null  $expires
      * @return static
-     * @throws \Psr\Cache\InvalidArgumentException
-     * @see self::put()
+     * @throws PsrInvalidArgumentExceptionContract
+     * @see self::set()
      * @deprecated
      */
-    public function putValue(string|int $key, mixed $value, int|string $expires = null): static
+    public function putValue(string $key, mixed $value, int|string $expires = null): static
     {
-        return $this->put(...func_get_args());
+        $this->put(...func_get_args());
+
+        return $this;
     }
 
     /**
@@ -371,17 +411,12 @@ class CacheInstance
      *
      * @param  array  $keys  - for examples ['key1','key2]
      * @return array - ['key1'=>'value1', 'key2'=>'value']
-     * @throws \Psr\Cache\InvalidArgumentException
-     * @deprecated - use self::filter() -> instead
+     * @throws PsrInvalidArgumentExceptionContract
+     * @deprecated - use self::getValues() -> instead
      */
     public function getMultipleValues(array $keys): array
     {
-        $output = [];
-        foreach ($keys as $key) {
-            $output[$key] = $this->getValue($key, null);
-        }
-
-        return $output;
+        return $this->getValues($keys, null);
     }
     //endregion
 }

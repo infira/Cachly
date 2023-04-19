@@ -12,17 +12,22 @@ class CacheInstanceKeyManager
 
     public function __construct(private readonly CacheInstance $cache)
     {
-        $this->item = $cache->getItem("key-storage-".$this->cache->getNamespace());
+        $this->item = $cache->getAdapter()->getItem("key-storage-".$this->cache->getNamespace());
     }
 
-    public function add(string $key): static
+    public function register(string|array $key): static
     {
-        if ($this->has($key)) {
-            return $this;
+        $currentKeys = $this->all();
+        $isDirty = false;
+        foreach ((array)$key as $k) {
+            if (!in_array($k, $currentKeys, true)) {
+                $currentKeys[] = $k;
+                $isDirty = true;
+            }
         }
-        $array = $this->all();
-        $array[] = $key;
-        $this->item->set($array);
+        if ($isDirty) {
+            return $this->set($currentKeys);
+        }
 
         return $this;
     }
@@ -32,12 +37,18 @@ class CacheInstanceKeyManager
         return in_array($key, $this->all(), true);
     }
 
-    public function forget(string $key): static
+    public function forget(string|array $key): static
     {
-        if ($this->has($key)) {
-            $array = $this->all();
-            unset($array[array_search($key, $array, true)]);
-            $this->item->set($array);
+        $currentKeys = $this->all();
+        $isDirty = false;
+        foreach ((array)$key as $k) {
+            if (($index = array_search($k, $currentKeys, true)) !== false) {
+                unset($currentKeys[$index]);
+                $isDirty = true;
+            }
+        }
+        if ($isDirty) {
+            return $this->set($currentKeys);
         }
 
         return $this;
@@ -45,18 +56,23 @@ class CacheInstanceKeyManager
 
     public function all(): array
     {
-        return $this->item->get() ?: [];
+        return array_values($this->item->get() ?: []);
     }
 
     public function clear(): static
     {
-        $this->item->set([]);
+        return $this->set([]);
+    }
+
+    public function set(array $keys): static
+    {
+        $this->cache->saveDeferred($this->item->set($keys));
 
         return $this;
     }
 
     public function save(): void
     {
-        $this->cache->getAdapter()->save($this->item);
+        $this->cache->commit();
     }
 }

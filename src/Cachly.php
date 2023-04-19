@@ -12,28 +12,35 @@ use Infira\Cachly\options\RedisAdapterOptions;
 use Infira\Cachly\Support\AdapterRegister;
 use Infira\Cachly\Support\CacheInstanceRegister;
 use Infira\Cachly\Support\Collection;
+use Psr\Cache\CacheItemInterface;
 use RuntimeException;
 use Symfony\Component\Cache\Adapter\AbstractAdapter;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Cache\Adapter\MemcachedAdapter;
 use Symfony\Component\Cache\Adapter\PdoAdapter;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
-use Symfony\Component\Cache\CacheItem;
-use Symfony\Contracts\Cache\CallbackInterface;
 
 /**
  * @method static CacheInstance sub(string $key)
- * @method static CacheInstance  put(string|int $key, $value, int|string|DateTimeInterface|DateInterval|null $expires = null)
- * @method static CacheItem getItem(string|int $key)
- * @method static mixed get(string|int $key, callable|CallbackInterface $callback)
- * @method static mixed once(mixed ...$keys, callable $callback) Execute $callback once by hash-sum of $parameters
- * @method static mixed getValue(string|int $key, mixed $default = null)
- * @method static bool has(string|int $key)
- * @method static bool isExpired(string|int $key)
- * @method static bool forget(string|int|callable $key)
+ * @method static CacheItem put(string $key, mixed $value, int|string|DateTimeInterface|DateInterval|null $expires = null) - saves value immediately
+ * @method static CacheItem set(string $key, mixed $value)
+ * @method static bool save(CacheItemInterface $item)
+ * @method static bool saveDeferred(CacheItemInterface $item)
+ * @method static CacheItem getItem(string $key)
+ * @method static \Generator<string, CacheItem> getItems(string[] $key)
+ * @method static mixed get(string $key, mixed $value = null)
+ * @method static mixed once(mixed ...$params) Execute $callback once by hash-sum of $parameters
+ * @method static array getValues(array $keys, mixed $default = null)
+ * @method static bool has(string $key)
+ * @method static bool isExpired(string $key)
+ * @method static bool forget(string|string[]|callable $key)
+ * @method static bool delete(string $key)
+ * @method static bool deleteItem(string $key)
+ * @method static bool deleteItems(string[] $keys)
  * @method static bool forgetByRegex(string $keyPattern)
+ * @method static bool commit()
+ * @method static bool clear()
  * @method static bool prune()
- * @method static void clear()
  * @method static array getKeys()
  * @method static array all()
  * @method static array toArray()
@@ -42,7 +49,7 @@ use Symfony\Contracts\Cache\CallbackInterface;
  * @method static Collection filter(callable $callback)
  * @method static Collection filterRegex(string $keyPattern)
  * @method static Collection collect()
- * @method static mixed pipeInto(string|int $key, string $class, mixed $defaultValue = [])
+ * @method static mixed pipeInto(string $key, string $class, mixed $defaultValue = [])
  * @method static AbstractAdapter getAdapter()
  * @method static string getAdapterName()
  * @method static string getNamespace()

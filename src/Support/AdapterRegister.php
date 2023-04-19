@@ -2,7 +2,7 @@
 
 namespace Infira\Cachly\Support;
 
-use Infira\Cachly\Exception\InvalidArgumentException;
+use RuntimeException;
 use stdClass;
 use Symfony\Component\Cache\Adapter\AbstractAdapter;
 
@@ -19,7 +19,7 @@ final class AdapterRegister
     public static function get(string $name, string $namespace): AbstractAdapter
     {
         if (!self::isRegistered($name)) {
-            throw new InvalidArgumentException("adapter named($name) is not registered");
+            throw new RuntimeException("adapter named($name) is not registered");
         }
         $adapter = &self::$storage[$name];
 
@@ -39,7 +39,7 @@ final class AdapterRegister
     public static function register(string $name, callable|string $constructor): void
     {
         if (self::isRegistered($name)) {
-            throw new InvalidArgumentException("adapter($name) is already registered");
+            throw new RuntimeException("adapter($name) is already registered");
         }
         self::$storage[$name] = (object)['constructor' => $constructor, 'isConstructed' => false, 'adapter' => null];
     }

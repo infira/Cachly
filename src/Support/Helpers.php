@@ -3,8 +3,6 @@
 namespace Infira\Cachly\Support;
 
 
-use Infira\Cachly\Exception\InvalidArgumentException;
-use RuntimeException;
 use Serializable;
 use stdClass;
 
@@ -44,20 +42,24 @@ class Helpers
      * @param  mixed  ...$data
      * @return string
      */
-    public static function hashable(...$data): string
+
+    /**
+     * Make string for hashing
+     *
+     * @param  array  $keys
+     * @return string
+     */
+    public static function makeKeyString(array $keys): string
     {
         $output = [];
-        foreach ($data as $value) {
-            if (is_callable($value)) {
-                throw new RuntimeException('cant make callable to hashable');
-            }
+        foreach ($keys as $value) {
             if ($value instanceof Serializable) {
                 $value = self::varDump($value->serialize());
             }
             elseif (is_array($value) || $value instanceof stdClass) {
                 $valueDump = [];
                 foreach ((array)$value as $k => $v) {
-                    $valueDump[self::hashable($k)] = self::hashable($v);
+                    $valueDump[self::makeKeyString($k)] = self::makeKeyString($v);
                 }
                 $value = serialize($valueDump);
             }
@@ -72,12 +74,8 @@ class Helpers
         return implode('-', $output);
     }
 
-    public static function getId(mixed ...$key): string
+    public static function isCallable(mixed $value): bool
     {
-        if (!$key) {
-            throw new InvalidArgumentException('Cache key cannot be empty');
-        }
-
-        return hash('crc32b', static::hashable(...$key));
+        return is_callable($value) && !is_array($value);
     }
 }

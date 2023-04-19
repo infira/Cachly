@@ -51,8 +51,8 @@ Cachly::configure([
 
 **Options**
 
-* `defaultAdapter` - adapter which will be used when accessing Cachly::$instanceMethod(...), ex. `Cachly::getValue('myCacheItem')`
-* `memAdapter` - adapter which will be used when accessing Cachly::mem()->$instanceMethod, ex. `Cachly::mem()->getValue('myCacheItem')`
+* `defaultAdapter` - adapter which will be used when accessing Cachly::$instanceMethod(...)
+* `memAdapter` - adapter which will be used when accessing Cachly::mem()->$instanceMethod
 * `defaultInstanceName` - default namespace
 * `Cachly::setPropertyInstances` - for accessing Cachly::$sess instance
 
@@ -178,53 +178,91 @@ $Cachly::$sess->put(...);
 ```
 
 # Examples
-
-## Default adapter with default instance
-
-Once default adapter is configured you can use default methods for caching.
+Choose your favorite
 
 ```php
-Cachly::put('myKey', 'my Value', '+1 day');
+use Infira\Cachly\CacheItem;
 
-if (Cachly::has('myKey'))
-{
-	//yei, still exists
-	echo Cachly::getValue('myKey');
-	Cachly::forgetValue('myKey');
+if (!Cachly::has('myKey')) {
+    Cachly::put('myKey', 'my Value', '+1 day'); //save value immediately and will expire after one day
 }
 
-/**
-* @see https://symfony.com/doc/current/components/cache.html#basic-usage-psr-6
- */
-Cachly::get('my_cache_key', function (\Symfony\Component\Cache\CacheItem $item) {
+Cachly::get('key','defaultValue'); //defaultValue
+Cachly::get('key'); //null
+Cachly::put('key','stored value'); //CacheItem
+Cachly::get('key','defaultValue'); //stored value
+Cachly::get('key'); //stored value
+
+
+//run callback when value does not exist
+Cachly::get('compute-key','defaultValue'); //defaultValue
+Cachly::get('compute-key'); //null
+Cachly::get('compute-key', function (CacheItem $item) {
     $item->expiresAfter(3600);
 
-    // ... do some HTTP request or heavy computations
+    // do computations
     $computedValue = 'foobar';
 
     return $computedValue;
 });
+Cachly::get('compute-key','defaultValue'); //foobar
+Cachly::get('compute-key'); //foobar
+```
+### Using method arguments as key
+Use automated hashing from any value to compute value.
 
-//add as many variables as you want as long last variable is callback
-Cachly::once('key1',$filters,$someOtherVariable, function (\Symfony\Component\Cache\CacheItem $item) {
-    $item->expiresAfter(3600);
+```php
+function filterItems(DateTimeInterface $date, array $filters): mixed
+{
+    //add as many variables as you want as long last variable is callable
+    return Cachly::once('getDataFromDataBase', $date, $filters, function (CacheItem $item) use ($date, $filters) {
+        $item->expiresAfter(3600);
 
-    // ... do some HTTP request or heavy computations
-    $computedValue = 'foobar';
+        return db()->where('date', $date)->where($filters);
+    });
+}
+```
+### Defer
 
-    return $computedValue;
-});
+```php
+$item = Cachly::set('key','value1')->expire('tomorrow');
+$item->set('value2')
+Cachly::get('key'); //value2
+Cachly::setMany(['key1'=> 'value1','key2' => 'value2']);
+Cachly::commit(); //save all deferred items
+Cachly::get('key'); //value2
+
+//set save vs. commit
+$item = Cachly::set('key2','value1')->expire('tomorrow')->save(); //saves value to database
+$item->save(); //will not save because nothing has changed since last save
+$item->commit(); //will save value without checking changes
+$item->set('newValue')->save(); //will save
+$item->set('newValue')->save(); //do nothing
+$item->expire(5)->save(); //will save
+
+```
+### Auto save
+
+```php
+$item = Cachly::set('key2','value1')->autoSave(true); //tries save after every change
+$item->set('new value'); //will call save()
+
+
+
+
+
 
 //you can use also collections
 $MyCollection = Cachly::sub('myCollectionName');
-$MyCollection->put('myKey1', 'value1');
-$MyCollection->put('myKey2', 'value2');
-$MyCollection->put('myKey3', 'value3');
+$MyCollection->set('myKey1', 'value1')->expires('tomorrow');
+$MyCollection->set('myKey2', 'value2');
+$MyCollection->set('myKey3', 'value3');
+$MyCollection->commit(); //save values
 $MyCollectionSub = $MyCollection::sub('subCollection');
 $MyCollectionSub->put('myKey1', 'value1');
 $MyCollectionSub->put('myKey2', 'value2');
 $MyCollectionSub->put('myKey3', 'value3');
-$MyCollection->getValue('myKey3'); //outputs value3
+$MyCollection->get('myKey3'); //outputs value3
 $MyCollection->all(); //outputs
 /*
 Array
@@ -234,7 +272,7 @@ Array
     [myKey3] => value
 )
 */
-$MyCollection::sub('subCollection')->getValue('myKey3'); //outputs value3
+$MyCollection::sub('subCollection')->get('myKey3'); //outputs value3
 $MyCollectionSub->all(); //outputs
 /*
 Array

@@ -1,0 +1,148 @@
+<?php
+
+namespace Infira\Cachly;
+
+use Infira\Cachly\Support\Helpers;
+use Psr\Cache\CacheItemInterface;
+use Psr\Cache\InvalidArgumentException;
+use Symfony\Component\Cache\Adapter\AbstractAdapter;
+use Symfony\Contracts\Cache\CallbackInterface;
+use Symfony\Contracts\Cache\ItemInterface;
+
+/**
+ * @mixin CacheInstance
+ */
+trait CacheInstanceAdapterProxy
+{
+    public function getAdapter(): AbstractAdapter
+    {
+        return $this->adapter;
+    }
+
+    public function getAdapterName(): string
+    {
+        return $this->adapterName;
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    public function getItem(string $key): CacheItem
+    {
+        $this->keys->register($key);
+
+        return new CacheItem($this, $this->adapter->getItem($key));
+    }
+
+    /**
+     * @return iterable<string, CacheItem>
+     */
+    public function getItems(array $keys): \Generator
+    {
+        $this->keys->register($keys);
+
+        foreach ($this->adapter->getItems($keys) as $k => $item) {
+            yield $k => new CacheItem($this, $item);
+        }
+    }
+
+    /**
+     * When $value is not callable then acts as default value when item does not exist
+     *
+     * When $value is callable then fetches a value from the pool or computes it if not found.
+     * On cache misses, a callback is called that should return the missing value.
+     * This callback is given a PSR-6 CacheItemInterface instance corresponding to the
+     * requested key, that could be used e.g. for expiration control. It could also
+     * be an ItemInterface instance when its additional features are needed.
+     *
+     * @template T
+     *
+     * @param  string  $key  The key of the item to retrieve from the cache
+     * @param  (callable(CacheItemInterface,bool):T)|CallbackInterface<T>|mixed  $value
+     * @param  float|null  $beta  A float that, as it grows, controls the likeliness of triggering
+     *                              early expiration. 0 disables it, INF forces immediate expiration.
+     *                              The default (or providing null) is implementation dependent but should
+     *                              typically be 1.0, which should provide optimal stampede protection.
+     *                              See https://en.wikipedia.org/wiki/Cache_stampede#Probabilistic_early_expiration
+     * @param  array|null  $metadata  The metadata of the cached item {@see ItemInterface::getMetadata()}
+     *
+     * @return T
+     *
+     * @throws InvalidArgumentException When $key is not valid or when $beta is negative
+     */
+    public function get(string $key, mixed $value = null, float $beta = null, array &$metadata = null): mixed
+    {
+        $args = func_get_args();
+        $c = count($args);
+        if ($c === 1 || ($c === 2 && !Helpers::isCallable($value))) {
+            return $this->getValue($key, $value);
+        }
+        $this->keys->register($key);
+
+        $args[1] = fn(\Symfony\Component\Cache\CacheItem $baseItem, bool &$save) => $args[1](new CacheItem($this, $baseItem), $save);
+
+        return $this->adapter->get(...$args);
+    }
+
+    /**
+     * @alias self::forget()
+     * @throws InvalidArgumentException
+     * @see self::forget()
+     */
+    public function delete(string $key): bool
+    {
+        return $this->forget($key);
+    }
+
+    /**
+     * @alias self::forget()
+     * @throws InvalidArgumentException
+     * @see self::forget()
+     */
+    public function deleteItem(string $key): bool
+    {
+        return $this->forget($key);
+    }
+
+    /**
+     * @param  string[]  $keys
+     * @alias self::forget()
+     * @throws InvalidArgumentException
+     * @see self::forget()
+     */
+    public function deleteItems(array $keys): bool
+    {
+        return $this->forget($keys);
+    }
+
+    public function save(CacheItemInterface $item): bool
+    {
+        if ($item instanceof CacheItem) {
+            $item = $item->baseItem();
+        }
+
+        return $this->adapter->save($item);
+    }
+
+    public function saveDeferred(CacheItemInterface $item): bool
+    {
+        if ($item instanceof CacheItem) {
+            $item = $item->baseItem();
+        }
+
+        return $this->adapter->saveDeferred($item);
+    }
+
+    public function commit(): bool
+    {
+        return $this->adapter->commit();
+    }
+
+    /**
+     * Flush data on current instance/collection
+     */
+    public function clear(): bool
+    {
+        return $this->adapter->clear();
+    }
+}
