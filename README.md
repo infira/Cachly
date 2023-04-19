@@ -46,7 +46,6 @@ Cachly::configure([
     'defaultAdapter' => Cachly::SESS,
     'memAdapter' => Cachly::REDIS,
     'defaultInstanceName' => 'cachly-production',
-    'cacheIDHashAlgorithm' => 'crc32b'
 ]);
 ```
 
@@ -54,8 +53,7 @@ Cachly::configure([
 
 * `defaultAdapter` - adapter which will be used when accessing Cachly::$instanceMethod(...), ex. `Cachly::getValue('myCacheItem')`
 * `memAdapter` - adapter which will be used when accessing Cachly::mem()->$instanceMethod, ex. `Cachly::mem()->getValue('myCacheItem')`
-* `defaultInstanceName` - string which will be used to generate cacheIDS
-* `cacheIDHashAlgorithm` - hash Algorithm used in making cacheID's
+* `defaultInstanceName` - default namespace
 * `Cachly::setPropertyInstances` - for accessing Cachly::$sess instance
 
 ## Configure PDO/database adapter adapter
@@ -132,8 +130,7 @@ Cachly::sess('new instance')->put(...)
 @see https://symfony.com/doc/current/components/cache.html for more information
 
 ```php
-Cachly::configureAdapter(
-    'myAdapter', function(string $namespace) {
+Cachly::configureAdapter('myAdapter', function (string $namespace) {
     return MyAwesomeAdapter($namespace);
 });
 //accessing instance
@@ -154,10 +151,10 @@ class MyCachly extends Cachly
             'myAdapter', function(string $namespace) {
             return MyAwesomeAdapter($namespace);
         });
-        static::$myAdapter = static::myAdapter(static::DEFAULT_INSTANCE_NAME);
+        static::$myAdapter = static::myAdapterInstance();
     }
 
-    public static function myAdapter(string $namespace = 'some-other-namespace'): \Infira\Cachly\CacheInstance
+    public static function myAdapterInstance(string $namespace = null): \Infira\Cachly\CacheInstance
     {
         return static::instance($namespace, 'myAdapter')
     }
@@ -166,16 +163,16 @@ class MyCachly extends Cachly
 MyCachly::configure();
 MyCachly::$myAdapter->set('myKey', 'value'); 
 //or creating new instance 
-MyCachly::myAdapter('new instance')->set('myKey', 'value');
+MyCachly::myAdapterInstance('new instance')->set('myKey', 'value');
 ```
 
 ### Shortcuts
 
 ```php
 Cachly::setPropertyInstances([
-Cachly::SESS => static fn() => Cachly::sess(),
-Cachly::DB => static fn() => Cachly::db(),
-Cachly::FILE => static fn() => Cachly::file(),
+    Cachly::SESS => static fn() => Cachly::sess(),
+    Cachly::DB => static fn() => Cachly::db(),
+    Cachly::FILE => static fn() => Cachly::file(),
 ]);
 $Cachly::$sess->put(...);
 ```
@@ -199,7 +196,7 @@ if (Cachly::has('myKey'))
 /**
 * @see https://symfony.com/doc/current/components/cache.html#basic-usage-psr-6
  */
-Cachly::get('my_cache_key', function (\Infira\Cachly\Item\CacheItem $item) {
+Cachly::get('my_cache_key', function (\Symfony\Component\Cache\CacheItem $item) {
     $item->expiresAfter(3600);
 
     // ... do some HTTP request or heavy computations
@@ -209,7 +206,7 @@ Cachly::get('my_cache_key', function (\Infira\Cachly\Item\CacheItem $item) {
 });
 
 //add as many variables as you want as long last variable is callback
-Cachly::once('key1',$filters,$someOtherVariable, function (\Infira\Cachly\Item\CacheItem $item) {
+Cachly::once('key1',$filters,$someOtherVariable, function (\Symfony\Component\Cache\CacheItem $item) {
     $item->expiresAfter(3600);
 
     // ... do some HTTP request or heavy computations

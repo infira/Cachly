@@ -7,6 +7,8 @@ use Symfony\Component\Cache\Adapter\AbstractAdapter;
 
 class SessionAdapter extends AbstractAdapter
 {
+    protected $maxIdLength = 255;
+
     public function __construct(private readonly string $namespace = '')
     {
         if (!isset($_SESSION)) {
@@ -34,16 +36,20 @@ class SessionAdapter extends AbstractAdapter
 
     protected function doHave(string $id): bool
     {
-        if (!array_key_exists($this->namespace, $_SESSION)) {
+        if (!isset($_SESSION[$this->namespace][$id])) {
+            return false;
+        }
+        if (isset($_SESSION["$this->namespace-expires"][$id]) && time() > $_SESSION["$this->namespace-expires"][$id]) {
             return false;
         }
 
-        return array_key_exists($id, $_SESSION[$this->namespace]);
+        return true;
     }
 
     protected function doClear(string $namespace): bool
     {
         $_SESSION[$this->namespace] = [];
+        unset($_SESSION["$this->namespace-expires"]);
 
         return true;
     }
@@ -51,8 +57,11 @@ class SessionAdapter extends AbstractAdapter
     protected function doDelete(array $ids): bool
     {
         foreach ($ids as $id) {
-            if ($this->doHave($id)) {
+            if (isset($_SESSION[$this->namespace][$id])) {
                 unset($_SESSION[$this->namespace][$id]);
+                if (isset($_SESSION["$this->namespace-expires"][$id])) {
+                    unset($_SESSION["$this->namespace-expires"][$id]);
+                }
             }
         }
 
@@ -62,6 +71,9 @@ class SessionAdapter extends AbstractAdapter
     protected function doSave(array $values, int $lifetime): array|bool
     {
         foreach ($values as $id => $value) {
+            if ($lifetime > 0) {
+                $_SESSION["$this->namespace-expires"][$id] = time() + $lifetime;
+            }
             $_SESSION[$this->namespace][$id] = $value;
         }
 

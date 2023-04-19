@@ -17,7 +17,8 @@
   "prefer-stable": true,
   "require": {
     "php": ">=8.1",
-    "infira/wolo": "~v1.1.1",
-    "symfony/cache": "^6.1"
+    "symfony/cache": "^6.1",
+    "infira/errorhandler": "^2.1",
+    "infira/wolo": "^1.1"
   }
 }
