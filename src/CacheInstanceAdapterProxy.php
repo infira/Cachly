@@ -25,9 +25,6 @@ trait CacheInstanceAdapterProxy
     }
 
     /**
-     * @throws InvalidArgumentException
-     */
-    /**
      * @param  string  $key
      * @param  mixed|null  $value  - set value to CacheItem
      * @return CacheItem
@@ -53,6 +50,20 @@ trait CacheInstanceAdapterProxy
         }
 
         return $this->deferredSet[$key];
+    }
+
+    /**
+     * Alias for getItem
+     *
+     * @alias
+     * @param  string  $key
+     * @param  mixed|null  $value
+     * @return CacheItem
+     * @throws InvalidArgumentException
+     */
+    public function item(string $key, mixed $value = null): CacheItem
+    {
+        return $this->getItem(...func_get_args());
     }
 
     /**
