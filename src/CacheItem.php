@@ -5,9 +5,7 @@ namespace Infira\Cachly;
 use DateInterval;
 use DateTime;
 use DateTimeInterface;
-use Exception;
 use Infira\Cachly\Support\Helpers;
-use Psr\Cache\InvalidArgumentException;
 use Symfony\Component\Cache\CacheItem as BaseCacheItem;
 use Symfony\Contracts\Cache\ItemInterface;
 
@@ -35,9 +33,6 @@ class CacheItem implements ItemInterface, \ArrayAccess
         return $this->baseItem;
     }
 
-    /**
-     * @throws InvalidArgumentException
-     */
     public function autoSave(bool $onOff): static
     {
         $this->autoSave = $onOff;
@@ -68,7 +63,7 @@ class CacheItem implements ItemInterface, \ArrayAccess
      * Persists a cache item only when item is dirty immediately.
      *
      * @return bool
-     * @throws InvalidArgumentException
+     *
      */
     public function save(): bool
     {
@@ -83,7 +78,7 @@ class CacheItem implements ItemInterface, \ArrayAccess
      * Persists a cache item immediately.
      *
      * @return bool
-     * @throws InvalidArgumentException
+     *
      */
     public function commit(): bool
     {
@@ -113,7 +108,6 @@ class CacheItem implements ItemInterface, \ArrayAccess
      * @example 10 -  TTL(time to live) forwarded call CacheItem::expiresAfter()
      * @param  int|string|DateTimeInterface|DateInterval|null  $expires
      * @return CacheItem
-     * @throws Exception
      */
     public function expires(int|string|DateTimeInterface|DateInterval|null $expires = null): static
     {
@@ -189,7 +183,7 @@ class CacheItem implements ItemInterface, \ArrayAccess
      *
      * @param  (callable(TValue): TValue)|mixed  $value
      * @return $this
-     * @throws InvalidArgumentException
+     *
      */
     public function set(mixed $value): static
     {
@@ -208,7 +202,7 @@ class CacheItem implements ItemInterface, \ArrayAccess
      *
      * @param  mixed  $value
      * @return $this
-     * @throws InvalidArgumentException
+     *
      */
     public function add(mixed $value): static
     {
@@ -269,7 +263,7 @@ class CacheItem implements ItemInterface, \ArrayAccess
     //endregion
 
     /**
-     * @throws InvalidArgumentException
+     *
      */
     protected function doAuto(): void
     {

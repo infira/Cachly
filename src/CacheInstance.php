@@ -4,11 +4,10 @@ namespace Infira\Cachly;
 
 use DateInterval;
 use DateTimeInterface;
-use Infira\Cachly\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 use Infira\Cachly\Support\CacheInstanceKeyManager;
 use Infira\Cachly\Support\Collection;
 use Infira\Cachly\Support\Helpers;
-use Psr\Cache\InvalidArgumentException as PsrInvalidArgumentExceptionContract;
 use Symfony\Component\Cache\Adapter\AbstractAdapter;
 
 /**
@@ -57,7 +56,7 @@ class CacheInstance
      * @example set multiple key-value pair set(['key1'=> 'value1','key2' => 'value2'])
      * @param  array<TKey,TValue>  $values
      * @return array<TKey,CacheItem>
-     * @throws PsrInvalidArgumentExceptionContract
+     *
      */
     public function setMany(array $values): array
     {
@@ -77,7 +76,7 @@ class CacheInstance
      * @param  string  $key
      * @param  mixed  $value  - value to store
      * @return CacheItem
-     * @throws PsrInvalidArgumentExceptionContract
+     *
      */
     public function set(string $key, mixed $value): CacheItem
     {
@@ -91,8 +90,6 @@ class CacheInstance
      * @param  mixed  $value  - value to store
      * @param  int|string|DateTimeInterface|DateInterval|null  $expires  @see CacheItem::expires()
      * @return CacheItem
-     * @throws PsrInvalidArgumentExceptionContract
-     * @throws \Exception
      */
     public function put(string $key, mixed $value, int|string|DateTimeInterface|DateInterval|null $expires = null): CacheItem
     {
@@ -110,7 +107,7 @@ class CacheInstance
      *
      * @param  TParams  ...$params  - will be used to generate hash sum ID for storing $callback result
      * @return mixed - $callback result
-     * @throws PsrInvalidArgumentExceptionContract
+     *
      */
     public function once(...$params): mixed
     {
@@ -139,7 +136,7 @@ class CacheInstance
      * @param  string  $key
      * @param  mixed  $default
      * @return mixed
-     * @throws PsrInvalidArgumentExceptionContract
+     *
      */
     public function getValue(string $key, mixed $default = null): mixed
     {
@@ -157,7 +154,7 @@ class CacheInstance
      * @param  array  $keys
      * @param  mixed|null  $default  - if default value is not set then on non-existing key will be not added
      * @return array
-     * @throws PsrInvalidArgumentExceptionContract
+     *
      */
     public function getValues(array $keys, mixed $default = null): array
     {
@@ -183,7 +180,7 @@ class CacheInstance
      *
      * @param  string  $key
      * @return bool
-     * @throws PsrInvalidArgumentExceptionContract
+     *
      */
     public function has(string $key): bool
     {
@@ -193,6 +190,7 @@ class CacheInstance
         if (!$this->keys->has($key)) {
             return false;
         }
+
         return $this->adapter->getItem($key)->isHit();
     }
 
@@ -201,7 +199,7 @@ class CacheInstance
      *
      * @param  string  $key
      * @return bool
-     * @throws PsrInvalidArgumentExceptionContract
+     *
      */
     public function isExpired(string $key): bool
     {
@@ -217,7 +215,7 @@ class CacheInstance
      *
      * @param  string|string[]|callable  $key  - $callable($cacheValue, $cacheKey):bool
      * @return bool
-     * @throws PsrInvalidArgumentExceptionContract
+     *
      */
     public function forget(string|array|callable $key): bool
     {
@@ -255,7 +253,7 @@ class CacheInstance
      *
      * @param  string  $keyPattern
      * @return void
-     * @throws PsrInvalidArgumentExceptionContract
+     *
      */
     public function forgetByRegex(string $keyPattern): void
     {
@@ -265,7 +263,7 @@ class CacheInstance
     /**
      * Delete expired items
      *
-     * @throws PsrInvalidArgumentExceptionContract
+     *
      */
     public function prune(): void
     {
@@ -280,7 +278,7 @@ class CacheInstance
      * Get cache keys
      *
      * @return array
-     * @throws PsrInvalidArgumentExceptionContract
+     *
      */
     public function getKeys(): array
     {
@@ -310,7 +308,7 @@ class CacheInstance
      * Get all items
      *
      * @return array
-     * @throws PsrInvalidArgumentExceptionContract
+     *
      */
     public function all(): array
     {
@@ -320,7 +318,7 @@ class CacheInstance
     /**
      * @alias self::all()
      * @return array
-     * @throws PsrInvalidArgumentExceptionContract
+     *
      */
     public function toArray(): array
     {
@@ -333,7 +331,7 @@ class CacheInstance
      *
      * @param  callable<string,mixed>  $callback
      * @return void
-     * @throws PsrInvalidArgumentExceptionContract
+     *
      */
     public function each(callable $callback): void
     {
@@ -346,7 +344,7 @@ class CacheInstance
      *
      * @param  callable<string,mixed>  $callback
      * @return Collection
-     * @throws PsrInvalidArgumentExceptionContract
+     *
      */
     public function map(callable $callback): Collection
     {
@@ -359,7 +357,7 @@ class CacheInstance
      *
      * @param  callable<string,mixed>  $callback
      * @return Collection
-     * @throws PsrInvalidArgumentExceptionContract
+     *
      */
     public function filter(callable $callback): Collection
     {
@@ -371,7 +369,7 @@ class CacheInstance
      *
      * @param  string  $keyPattern
      * @return Collection
-     * @throws PsrInvalidArgumentExceptionContract
+     *
      */
     public function filterRegex(string $keyPattern): Collection
     {
@@ -382,7 +380,7 @@ class CacheInstance
      * Collection values into Collection
      *
      * @return Collection
-     * @throws PsrInvalidArgumentExceptionContract
+     *
      */
     public function collect(): Collection
     {
@@ -396,7 +394,7 @@ class CacheInstance
      * @param  string  $class
      * @param  mixed  $defaultValue
      * @return mixed
-     * @throws PsrInvalidArgumentExceptionContract
+     *
      */
     public function pipeInto(string $key, string $class, mixed $defaultValue = []): mixed
     {
@@ -415,7 +413,7 @@ class CacheInstance
      * @param  mixed  $value
      * @param  int|string|null  $expires
      * @return static
-     * @throws PsrInvalidArgumentExceptionContract
+     *
      * @see self::put()
      * @deprecated
      */
@@ -431,7 +429,7 @@ class CacheInstance
      *
      * @param  array  $keys  - for examples ['key1','key2]
      * @return array - ['key1'=>'value1', 'key2'=>'value']
-     * @throws PsrInvalidArgumentExceptionContract
+     *
      * @deprecated - use self::getValues() -> instead
      */
     public function getMultipleValues(array $keys): array

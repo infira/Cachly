@@ -4,7 +4,6 @@ namespace Infira\Cachly;
 
 use Infira\Cachly\Support\Helpers;
 use Psr\Cache\CacheItemInterface;
-use Psr\Cache\InvalidArgumentException;
 use Symfony\Component\Cache\Adapter\AbstractAdapter;
 use Symfony\Contracts\Cache\CallbackInterface;
 use Symfony\Contracts\Cache\ItemInterface;
@@ -28,7 +27,6 @@ trait CacheInstanceAdapterProxy
      * @param  string  $key
      * @param  mixed|null  $value  - set value to CacheItem
      * @return CacheItem
-     * @throws InvalidArgumentException
      */
     public function getItem(string $key, mixed $value = null): CacheItem
     {
@@ -59,7 +57,6 @@ trait CacheInstanceAdapterProxy
      * @param  string  $key
      * @param  mixed|null  $value
      * @return CacheItem
-     * @throws InvalidArgumentException
      */
     public function item(string $key, mixed $value = null): CacheItem
     {
@@ -101,7 +98,7 @@ trait CacheInstanceAdapterProxy
      *
      * @return T
      *
-     * @throws InvalidArgumentException When $key is not valid or when $beta is negative
+     *  When $key is not valid or when $beta is negative
      */
     public function get(string $key, mixed $value = null, float $beta = null, array &$metadata = null): mixed
     {
@@ -119,7 +116,7 @@ trait CacheInstanceAdapterProxy
 
     /**
      * @alias self::forget()
-     * @throws InvalidArgumentException
+     *
      * @see self::forget()
      */
     public function delete(string $key): bool
@@ -129,7 +126,7 @@ trait CacheInstanceAdapterProxy
 
     /**
      * @alias self::forget()
-     * @throws InvalidArgumentException
+     *
      * @see self::forget()
      */
     public function deleteItem(string $key): bool
@@ -140,7 +137,7 @@ trait CacheInstanceAdapterProxy
     /**
      * @param  string[]  $keys
      * @alias self::forget()
-     * @throws InvalidArgumentException
+     *
      * @see self::forget()
      */
     public function deleteItems(array $keys): bool
