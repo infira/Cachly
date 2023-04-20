@@ -46,10 +46,10 @@ class Helpers
     /**
      * Make string for hashing
      *
-     * @param  array  $keys
+     * @param  mixed  ...$keys
      * @return string
      */
-    public static function makeKeyString(array $keys): string
+    public static function makeKeyString(mixed ...$keys): string
     {
         $output = [];
         foreach ($keys as $value) {
