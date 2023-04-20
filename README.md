@@ -178,6 +178,7 @@ $Cachly::$sess->put(...);
 ```
 
 # Examples
+
 Choose your favorite
 
 ```php
@@ -207,8 +208,15 @@ Cachly::get('compute-key', function (CacheItem $item) {
 });
 Cachly::get('compute-key','defaultValue'); //foobar
 Cachly::get('compute-key'); //foobar
+
+$item = Cachly::set('array', ['init value']);
+$item[] = 'value2';
+$item['key'] = 'value3';
+Cachly::get('array'); //foobar
 ```
+
 ### Using method arguments as key
+
 Use automated hashing from any value to compute value.
 
 ```php
@@ -222,6 +230,7 @@ function filterItems(DateTimeInterface $date, array $filters): mixed
     });
 }
 ```
+
 ### Defer
 
 ```php
@@ -231,8 +240,11 @@ Cachly::get('key'); //value2
 Cachly::setMany(['key1'=> 'value1','key2' => 'value2']);
 Cachly::commit(); //save all deferred items
 Cachly::get('key'); //value2
+```
 
-//set save vs. commit
+### Save, commit, autoSave
+
+```php
 $item = Cachly::set('key2','value1')->expire('tomorrow')->save(); //saves value to database
 $item->save(); //will not save because nothing has changed since last save
 $item->commit(); //will save value without checking changes
@@ -240,48 +252,29 @@ $item->set('newValue')->save(); //will save
 $item->set('newValue')->save(); //do nothing
 $item->expire(5)->save(); //will save
 
+$autoSave = Cachly::set('key2','value1')->autoSave(true); //tries save after every change
+$autoSave->set('new value'); //will call save()
+$autoSave->expire('tomorrow'); //will also call save
+
 ```
-### Auto save
+
+### Sub instances
 
 ```php
-$item = Cachly::set('key2','value1')->autoSave(true); //tries save after every change
-$item->set('new value'); //will call save()
+$sub = Cachly::sub('myCollectionName');
+$sub->set('myKey1', 'value1')->expires('tomorrow');
+$sub->set('myKey2', 'value2');
+$sub->all(); //[]
+$sub->commit(); //save values
+$sub->all(); //['myKey1' => 'value1','myKey2' => 'value2']
 
-
-
-
-
-
-//you can use also collections
-$MyCollection = Cachly::sub('myCollectionName');
-$MyCollection->set('myKey1', 'value1')->expires('tomorrow');
-$MyCollection->set('myKey2', 'value2');
-$MyCollection->set('myKey3', 'value3');
-$MyCollection->commit(); //save values
-$MyCollectionSub = $MyCollection::sub('subCollection');
-$MyCollectionSub->put('myKey1', 'value1');
-$MyCollectionSub->put('myKey2', 'value2');
-$MyCollectionSub->put('myKey3', 'value3');
-$MyCollection->get('myKey3'); //outputs value3
-$MyCollection->all(); //outputs
-/*
-Array
-(
-    [myKey1] => value
-    [myKey2] => value
-    [myKey3] => value
-)
-*/
-$MyCollection::sub('subCollection')->get('myKey3'); //outputs value3
-$MyCollectionSub->all(); //outputs
-/*
-Array
-(
-    [myKey1] => value
-    [myKey2] => value
-    [myKey3] => value
-)
-*/
+$subOfSub = $sub::sub('subCollection');
+$subOfSub->put('myKey1', 'value1');
+$subOfSub->put('myKey2', 'value2');
+$subOfSub->get('myKey2'); //outputs value2
+$subOfSub->all(); //['myKey1' => 'value1','myKey2' => 'value2']
+$sub::sub('subCollection')->get('myKey2'); //outputs value2
+$subOfSub->all(); //['myKey1' => 'value1','myKey2' => 'value2']
 ```
 
 ## Using a new instance for default adapter

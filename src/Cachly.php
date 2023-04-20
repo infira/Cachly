@@ -21,6 +21,7 @@ use Symfony\Component\Cache\Adapter\PdoAdapter;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
 
 /**
+ * @template TNamespace
  * @method static CacheInstance sub(string $key)
  * @method static CacheItem put(string $key, mixed $value, int|string|DateTimeInterface|DateInterval|null $expires = null) - saves value immediately
  * @method static CacheItem set(string $key, mixed $value)
@@ -134,9 +135,9 @@ class Cachly
 
     /**
      * @param  string  $name
-     * @param  callable|AbstractAdapter  $constructor
+     * @param  (callable(TNamespace):AbstractAdapter)  $constructor
      */
-    public static function configureAdapter(string $name, callable|AbstractAdapter $constructor): void
+    public static function configureAdapter(string $name, callable $constructor): void
     {
         AdapterRegister::register($name, $constructor);
     }
@@ -144,9 +145,10 @@ class Cachly
     /**
      * Configure session adapter
      *
+     * @param  (callable(TNamespace):AbstractAdapter)  $constructor
      * @see SessionAdapter
      */
-    public static function configureSessionAdapter(callable|AbstractAdapter $constructor): void
+    public static function configureSessionAdapter(callable $constructor): void
     {
         self::configureAdapter(static::SESS, $constructor);
     }
@@ -154,9 +156,11 @@ class Cachly
     /**
      * Configure redis adapter
      *
+     * @param  (callable(TNamespace):RedisAdapter)|RedisAdapterOptions|array  $options
      * @see https://symfony.com/doc/current/components/cache/adapters/redis_adapter.html
+     * @see RedisAdapter
      */
-    public static function configureRedisAdapter(array|callable|RedisAdapter|RedisAdapterOptions $options): void
+    public static function configureRedisAdapter(array|callable|RedisAdapterOptions $options): void
     {
         if (is_array($options)) {
             $options = new RedisAdapterOptions($options);
@@ -177,9 +181,11 @@ class Cachly
     /**
      * Configure memcached adapter
      *
+     * @param  (callable(TNamespace):MemcachedAdapter)|MemcachedAdapterOptions|array  $options
      * @see https://symfony.com/doc/current/components/cache/adapters/memcached_adapter.html
+     * @see MemcachedAdapter
      */
-    public static function configureMemcachedAdapter(array|callable|MemcachedAdapter|MemcachedAdapterOptions $options): void
+    public static function configureMemcachedAdapter(array|callable|MemcachedAdapterOptions $options): void
     {
         if (is_array($options)) {
             $options = new MemcachedAdapterOptions($options);
@@ -200,9 +206,11 @@ class Cachly
     /**
      * Configure database adapter
      *
+     * @param  (callable(TNamespace):PdoAdapter)|DbAdapterOptions|array  $options
      * @see https://symfony.com/doc/current/components/cache/adapters/pdo_doctrine_dbal_adapter.html
+     * @see PdoAdapter
      */
-    public static function configureDbAdapter(array|callable|PdoAdapter|DbAdapterOptions $options): void
+    public static function configureDbAdapter(array|callable|DbAdapterOptions $options): void
     {
         if (is_array($options)) {
             $options = new DbAdapterOptions($options);
@@ -225,9 +233,11 @@ class Cachly
     /**
      * Configure file adapter
      *
+     * @param  (callable(TNamespace):FilesystemAdapter)|FileSystemAdapterOptions|array  $options
      * @see https://symfony.com/doc/current/components/cache/adapters/filesystem_adapter.html
+     * @see FileSystemAdapterOptions
      */
-    public static function configureFileSystemAdapter(array|callable|FilesystemAdapter|FileSystemAdapterOptions $options): void
+    public static function configureFileSystemAdapter(array|callable|FileSystemAdapterOptions $options): void
     {
         if (is_array($options)) {
             $options = new FileSystemAdapterOptions($options);

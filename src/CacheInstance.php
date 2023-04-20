@@ -20,6 +20,10 @@ class CacheInstance
     use CacheInstanceAdapterProxy;
 
     public CacheInstanceKeyManager $keys;
+    /**
+     * @var CacheItem[]
+     */
+    private array $deferredSet = [];
 
     public function __construct(
         private readonly string $namespace,
@@ -31,7 +35,7 @@ class CacheInstance
 
     public function __destruct()
     {
-        $this->keys->save();
+        //$this->commit();
     }
 
     /**
@@ -77,7 +81,7 @@ class CacheInstance
      */
     public function set(string $key, mixed $value): CacheItem
     {
-        return $this->getItem($key)->set($value);
+        return $this->getItem(...func_get_args());
     }
 
     /**
@@ -92,7 +96,7 @@ class CacheInstance
      */
     public function put(string $key, mixed $value, int|string|DateTimeInterface|DateInterval|null $expires = null): CacheItem
     {
-        $item = $this->set(...func_get_args())->expires($expires);
+        $item = $this->getItem($key, $value)->expires($expires);
         $item->commit();
 
         return $item;
@@ -139,6 +143,9 @@ class CacheInstance
      */
     public function getValue(string $key, mixed $default = null): mixed
     {
+        if (isset($this->deferredSet[$key])) {
+            return $this->deferredSet[$key]->get();
+        }
         if (!$this->has($key)) {
             return $default;
         }
@@ -160,6 +167,9 @@ class CacheInstance
             if ($hasDefaultValue) {
                 $output[$key] = $this->getValue($key, $default);
             }
+            if (isset($this->deferredSet[$key])) {
+                $output[$key] = $this->deferredSet[$key]->get();
+            }
             elseif ($this->has($key)) {
                 $output[$key] = $this->adapter->getItem($key)->get();
             }
@@ -177,10 +187,12 @@ class CacheInstance
      */
     public function has(string $key): bool
     {
+        if (isset($this->deferredSet[$key])) {
+            return true;
+        }
         if (!$this->keys->has($key)) {
             return false;
         }
-
         return $this->adapter->getItem($key)->isHit();
     }
 
@@ -227,6 +239,11 @@ class CacheInstance
         if (!$deleteKeys) {
             return false;
         }
+        foreach ($deleteKeys as $k) {
+            if (isset($this->deferredSet[$k])) {
+                unset($this->deferredSet[$k]);
+            }
+        }
         $this->keys->forget($deleteKeys);
 
         return $this->adapter->deleteItems($deleteKeys);
@@ -236,13 +253,13 @@ class CacheInstance
     /**
      * Delete by regular expression against cache key
      *
-     * @param  string  $leyPattern
+     * @param  string  $keyPattern
      * @return void
      * @throws PsrInvalidArgumentExceptionContract
      */
-    public function forgetByRegex(string $leyPattern): void
+    public function forgetByRegex(string $keyPattern): void
     {
-        $this->filterRegex($leyPattern)->each(fn($cacheValue, $cacheKey) => $this->forget($cacheKey));
+        $this->filterRegex($keyPattern)->each(fn($cacheValue, $cacheKey) => $this->forget($cacheKey));
     }
 
     /**
@@ -271,7 +288,10 @@ class CacheInstance
         $keys = $this->keys->all();
         $isDirty = false;
         foreach ($keys as $i => $key) {
-            if ($this->adapter->hasItem($key)) {
+            if (isset($this->deferredSet[$key])) {
+                $output[] = $key;
+            }
+            elseif ($this->adapter->hasItem($key)) {
                 $output[] = $key;
             }
             else {
@@ -396,7 +416,7 @@ class CacheInstance
      * @param  int|string|null  $expires
      * @return static
      * @throws PsrInvalidArgumentExceptionContract
-     * @see self::set()
+     * @see self::put()
      * @deprecated
      */
     public function putValue(string $key, mixed $value, int|string $expires = null): static

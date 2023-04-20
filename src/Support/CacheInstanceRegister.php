@@ -21,7 +21,7 @@ final class CacheInstanceRegister
             self::$storage[$key] = new CacheInstance(
                 $namespace,
                 $adapterName,
-                AdapterRegister::get($adapterName, $namespace)
+                AdapterRegister::make($adapterName, $namespace)
             );
         }
 

@@ -14,7 +14,7 @@ use Symfony\Contracts\Cache\ItemInterface;
 /**
  * @template TValue
  */
-class CacheItem implements ItemInterface
+class CacheItem implements ItemInterface, \ArrayAccess
 {
     private bool $autoSave = false;
     private bool $isDirty = false;
@@ -22,8 +22,13 @@ class CacheItem implements ItemInterface
 
     public function __construct(
         private readonly CacheInstance $cache,
-        private BaseCacheItem $baseItem
-    ) {}
+        private BaseCacheItem $baseItem,
+        mixed $value = null
+    ) {
+        if (func_num_args() === 3) {
+            $this->set($value);
+        }
+    }
 
     public function baseItem(): BaseCacheItem
     {
@@ -92,13 +97,14 @@ class CacheItem implements ItemInterface
     /**
      * Sets a cache item to be persisted later.
      *
-     * @return bool
+     * @return CacheItem
      */
-    public function saveDeferred(): bool
+    public function defer(): static
     {
         $this->markDirty(true);
+        $this->cache->saveDeferred($this->baseItem);
 
-        return $this->cache->saveDeferred($this->baseItem);
+        return $this;
     }
 
     /**
@@ -197,6 +203,31 @@ class CacheItem implements ItemInterface
         return $this;
     }
 
+    /**
+     * Acts ass $array[] = $value
+     *
+     * @param  mixed  $value
+     * @return $this
+     * @throws InvalidArgumentException
+     */
+    public function add(mixed $value): static
+    {
+        $arr = $this->get();
+        $arr[] = $value;
+
+        return $this->set($arr);
+    }
+
+    public function push(mixed ...$values): static
+    {
+        $arr = $this->get();
+        foreach ($values as $value) {
+            $arr[] = $value;
+        }
+
+        return $this->set($arr);
+    }
+
     /** @inheritDoc */
     public function expiresAt(?DateTimeInterface $expiration): static
     {
@@ -254,4 +285,32 @@ class CacheItem implements ItemInterface
         return $this;
     }
 
+    public function offsetExists(mixed $offset): bool
+    {
+        return isset($this->get()[$offset]);
+    }
+
+    public function offsetGet(mixed $offset): mixed
+    {
+        return $this->get()[$offset];
+    }
+
+    public function offsetSet(mixed $offset, mixed $value): void
+    {
+        $current = $this->get();
+        if ($offset === null) {
+            $current[] = $value;
+        }
+        else {
+            $current[$offset] = $value;
+        }
+        $this->set($current);
+    }
+
+    public function offsetUnset(mixed $offset): void
+    {
+        $current = $this->get();
+        unset($current[$offset]);
+        $this->set($current);
+    }
 }

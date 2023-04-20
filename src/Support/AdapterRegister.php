@@ -7,6 +7,7 @@ use stdClass;
 use Symfony\Component\Cache\Adapter\AbstractAdapter;
 
 /**
+ * @template TNamespace
  * @internal
  */
 final class AdapterRegister
@@ -16,32 +17,24 @@ final class AdapterRegister
      */
     private static array $storage = [];
 
-    public static function get(string $name, string $namespace): AbstractAdapter
+    public static function make(string $name, string $namespace): AbstractAdapter
     {
         if (!self::isRegistered($name)) {
             throw new RuntimeException("adapter named($name) is not registered");
         }
-        $adapter = &self::$storage[$name];
-
-        if ($adapter->isConstructed) {
-            return $adapter->adapter;
-        }
-        $adapter->isConstructed = true;
-        $adapter->adapter = ($adapter->constructor instanceof AbstractAdapter) ? $adapter->constructor : ($adapter->constructor)($namespace);
-
-        return $adapter->adapter;
+        return self::$storage[$name]($namespace);
     }
 
     /**
      * @param  string  $name
-     * @param  callable|string  $constructor
+     * @param  (callable(TNamespace):AbstractAdapter)  $constructor
      */
-    public static function register(string $name, callable|string $constructor): void
+    public static function register(string $name, callable $constructor): void
     {
         if (self::isRegistered($name)) {
             throw new RuntimeException("adapter($name) is already registered");
         }
-        self::$storage[$name] = (object)['constructor' => $constructor, 'isConstructed' => false, 'adapter' => null];
+        self::$storage[$name] = $constructor;
     }
 
     public static function isRegistered(string $name): bool

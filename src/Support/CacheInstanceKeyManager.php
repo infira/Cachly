@@ -12,7 +12,7 @@ class CacheInstanceKeyManager
 
     public function __construct(private readonly CacheInstance $cache)
     {
-        $this->item = $cache->getAdapter()->getItem("key-storage-".$this->cache->getNamespace());
+        $this->item = $cache->getAdapter()->getItem(md5('CacheInstanceKeyManager-key-storage'));
     }
 
     public function register(string|array $key): static

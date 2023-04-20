@@ -27,11 +27,32 @@ trait CacheInstanceAdapterProxy
     /**
      * @throws InvalidArgumentException
      */
-    public function getItem(string $key): CacheItem
+    /**
+     * @param  string  $key
+     * @param  mixed|null  $value  - set value to CacheItem
+     * @return CacheItem
+     * @throws InvalidArgumentException
+     */
+    public function getItem(string $key, mixed $value = null): CacheItem
     {
         $this->keys->register($key);
+        if (!isset($this->deferredSet[$key])) {
+            if (func_num_args() === 2) {
+                $this->deferredSet[$key] = new CacheItem(
+                    $this,
+                    $this->adapter->getItem($key),
+                    $value
+                );
+            }
+            else {
+                $this->deferredSet[$key] = new CacheItem(
+                    $this,
+                    $this->adapter->getItem($key)
+                );
+            }
+        }
 
-        return new CacheItem($this, $this->adapter->getItem($key));
+        return $this->deferredSet[$key];
     }
 
     /**
@@ -42,7 +63,8 @@ trait CacheInstanceAdapterProxy
         $this->keys->register($keys);
 
         foreach ($this->adapter->getItems($keys) as $k => $item) {
-            yield $k => new CacheItem($this, $item);
+            $this->deferredSet[$k] = new CacheItem($this, $item);
+            yield $k => $this->deferredSet[$k];
         }
     }
 
@@ -72,12 +94,12 @@ trait CacheInstanceAdapterProxy
      */
     public function get(string $key, mixed $value = null, float $beta = null, array &$metadata = null): mixed
     {
+        $this->keys->register($key);
         $args = func_get_args();
         $c = count($args);
         if ($c === 1 || ($c === 2 && !Helpers::isCallable($value))) {
             return $this->getValue($key, $value);
         }
-        $this->keys->register($key);
 
         $args[1] = fn(\Symfony\Component\Cache\CacheItem $baseItem, bool &$save) => $args[1](new CacheItem($this, $baseItem), $save);
 
@@ -135,6 +157,11 @@ trait CacheInstanceAdapterProxy
 
     public function commit(): bool
     {
+        foreach ($this->deferredSet as $item) {
+            $item->defer();
+        }
+        $this->deferredSet = [];
+
         return $this->adapter->commit();
     }
 
@@ -143,6 +170,8 @@ trait CacheInstanceAdapterProxy
      */
     public function clear(): bool
     {
+        $this->deferredSet = [];
+
         return $this->adapter->clear();
     }
 }
