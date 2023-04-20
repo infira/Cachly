@@ -25,10 +25,10 @@ trait CacheInstanceAdapterProxy
 
     /**
      * @param  string  $key
-     * @param  mixed|null  $value  - set value to CacheItem
+     * @param  mixed|null  $initialValue  - set value to CacheItem
      * @return CacheItem
      */
-    public function getItem(string $key, mixed $value = null): CacheItem
+    public function getItem(string $key, mixed $initialValue = null): CacheItem
     {
         $this->keys->register($key);
         if (!isset($this->deferredSet[$key])) {
@@ -36,7 +36,7 @@ trait CacheInstanceAdapterProxy
                 $this->deferredSet[$key] = new CacheItem(
                     $this,
                     $this->adapter->getItem($key),
-                    $value
+                    $initialValue
                 );
             }
             else {
@@ -55,10 +55,10 @@ trait CacheInstanceAdapterProxy
      *
      * @alias
      * @param  string  $key
-     * @param  mixed|null  $value
+     * @param  mixed|null  $initialValue
      * @return CacheItem
      */
-    public function item(string $key, mixed $value = null): CacheItem
+    public function item(string $key, mixed $initialValue = null): CacheItem
     {
         return $this->getItem(...func_get_args());
     }

@@ -80,7 +80,7 @@ class CacheInstance
      */
     public function set(string $key, mixed $value): CacheItem
     {
-        return $this->item(...func_get_args());
+        return $this->item($key)->set($value);
     }
 
     /**
@@ -93,7 +93,7 @@ class CacheInstance
      */
     public function put(string $key, mixed $value, int|string|DateTimeInterface|DateInterval|null $expires = null): CacheItem
     {
-        $item = $this->item($key, $value)->expires($expires);
+        $item = $this->item($key)->set($value)->expires($expires);
         $item->commit();
 
         return $item;
