@@ -22,12 +22,13 @@ final class AdapterRegister
         if (!self::isRegistered($name)) {
             throw new RuntimeException("adapter named($name) is not registered");
         }
+
         return self::$storage[$name]($namespace);
     }
 
     /**
-     * @param  string  $name
-     * @param  (callable(TNamespace):AbstractAdapter)  $constructor
+     * @param string $name
+     * @param (callable(TNamespace):AbstractAdapter) $constructor
      */
     public static function register(string $name, callable $constructor): void
     {

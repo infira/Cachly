@@ -65,13 +65,13 @@ class Cachly
     public static CacheInstance $memCached;
     public static CacheInstance $file;
 
-    public const DB = 'db';
-    public const FILE = 'file';
-    public const MEM = 'mem';
-    public const REDIS = 'redis';
-    public const MEM_CACHED = 'memCached';
-    public const SESS = 'sess';
-    public const DEFAULT_INSTANCE_NAME = 'cachly-production';
+    public const string DB = 'db';
+    public const string FILE = 'file';
+    public const string MEM = 'mem';
+    public const string REDIS = 'redis';
+    public const string MEM_CACHED = 'memCached';
+    public const string SESS = 'sess';
+    public const string DEFAULT_INSTANCE_NAME = 'cachly-production';
 
     public static array $options = [
         'defaultAdapter' => self::SESS,
@@ -94,7 +94,7 @@ class Cachly
     /**
      * Initializes Cachly
      *
-     * @param  array  $options
+     * @param array $options
      */
     public static function configure(array $options = []): void
     {
@@ -104,8 +104,8 @@ class Cachly
     /**
      * Get stored option value
      *
-     * @param  string  $name
-     * @param  mixed|null  $default
+     * @param string $name
+     * @param mixed|null $default
      * @return mixed
      */
     public static function getOpt(string $name, mixed $default = null): mixed
@@ -134,8 +134,8 @@ class Cachly
     }
 
     /**
-     * @param  string  $name
-     * @param  (callable(TNamespace):AbstractAdapter)  $constructor
+     * @param string $name
+     * @param (callable(TNamespace):AbstractAdapter) $constructor
      */
     public static function configureAdapter(string $name, callable $constructor): void
     {
@@ -145,7 +145,7 @@ class Cachly
     /**
      * Configure session adapter
      *
-     * @param  (callable(TNamespace):AbstractAdapter)  $constructor
+     * @param (callable(TNamespace):AbstractAdapter) $constructor
      * @see SessionAdapter
      */
     public static function configureSessionAdapter(callable $constructor): void
@@ -156,7 +156,7 @@ class Cachly
     /**
      * Configure redis adapter
      *
-     * @param  (callable(TNamespace):RedisAdapter)|RedisAdapterOptions|array  $options
+     * @param (callable(TNamespace):RedisAdapter)|RedisAdapterOptions|array $options
      * @see https://symfony.com/doc/current/components/cache/adapters/redis_adapter.html
      * @see RedisAdapter
      */
@@ -181,7 +181,7 @@ class Cachly
     /**
      * Configure memcached adapter
      *
-     * @param  (callable(TNamespace):MemcachedAdapter)|MemcachedAdapterOptions|array  $options
+     * @param (callable(TNamespace):MemcachedAdapter)|MemcachedAdapterOptions|array $options
      * @see https://symfony.com/doc/current/components/cache/adapters/memcached_adapter.html
      * @see MemcachedAdapter
      */
@@ -206,7 +206,7 @@ class Cachly
     /**
      * Configure database adapter
      *
-     * @param  (callable(TNamespace):PdoAdapter)|DbAdapterOptions|array  $options
+     * @param (callable(TNamespace):PdoAdapter)|DbAdapterOptions|array $options
      * @see https://symfony.com/doc/current/components/cache/adapters/pdo_doctrine_dbal_adapter.html
      * @see PdoAdapter
      */
@@ -233,7 +233,7 @@ class Cachly
     /**
      * Configure file adapter
      *
-     * @param  (callable(TNamespace):FilesystemAdapter)|FileSystemAdapterOptions|array  $options
+     * @param (callable(TNamespace):FilesystemAdapter)|FileSystemAdapterOptions|array $options
      * @see https://symfony.com/doc/current/components/cache/adapters/filesystem_adapter.html
      * @see FileSystemAdapterOptions
      */
@@ -256,10 +256,10 @@ class Cachly
     /**
      * Create cache instance with database adapter
      *
-     * @param  string|null  $namespace  - if null $opt['defaultInstanceName'] - will be used
+     * @param string|null $namespace - if null $opt['defaultInstanceName'] - will be used
      * @return CacheInstance
      */
-    public static function db(string $namespace = null): CacheInstance
+    public static function db(?string $namespace = null): CacheInstance
     {
         return self::instance($namespace, self::DB);
     }
@@ -267,10 +267,10 @@ class Cachly
     /**
      * Create cache instance with file adapter
      *
-     * @param  string|null  $namespace  - if null $opt['defaultInstanceName'] - will be used
+     * @param string|null $namespace - if null $opt['defaultInstanceName'] - will be used
      * @return CacheInstance
      */
-    public static function file(string $namespace = null): CacheInstance
+    public static function file(?string $namespace = null): CacheInstance
     {
         return self::instance($namespace, self::FILE);
     }
@@ -279,10 +279,10 @@ class Cachly
      * Create cache instance with memory adapter
      * Uses $options['memAdapter'] as adapter
      *
-     * @param  string|null  $namespace  - if null $opt['defaultInstanceName'] - will be used
+     * @param string|null $namespace - if null $opt['defaultInstanceName'] - will be used
      * @return CacheInstance
      */
-    public static function mem(string $namespace = null): CacheInstance
+    public static function mem(?string $namespace = null): CacheInstance
     {
         return self::instance($namespace, self::MEM);
     }
@@ -290,10 +290,10 @@ class Cachly
     /**
      * Create cache instance with redis adapter
      *
-     * @param  string|null  $namespace  - if null $opt['defaultInstanceName'] - will be used
+     * @param string|null $namespace - if null $opt['defaultInstanceName'] - will be used
      * @return CacheInstance
      */
-    public static function redis(string $namespace = null): CacheInstance
+    public static function redis(?string $namespace = null): CacheInstance
     {
         return self::instance($namespace, self::REDIS);
     }
@@ -301,10 +301,10 @@ class Cachly
     /**
      * Create cache instance with memCached adapter
      *
-     * @param  string|null  $namespace  - if null $opt['defaultInstanceName'] - will be used
+     * @param string|null $namespace - if null $opt['defaultInstanceName'] - will be used
      * @return CacheInstance
      */
-    public static function memCached(string $namespace = null): CacheInstance
+    public static function memCached(?string $namespace = null): CacheInstance
     {
         return self::instance($namespace, self::MEM_CACHED);
     }
@@ -312,10 +312,10 @@ class Cachly
     /**
      * Create cache instance with session adapter
      *
-     * @param  string|null  $namespace  - if null $opt['defaultInstanceName'] - will be used
+     * @param string|null $namespace - if null $opt['defaultInstanceName'] - will be used
      * @return CacheInstance
      */
-    public static function sess(string $namespace = null): CacheInstance
+    public static function sess(?string $namespace = null): CacheInstance
     {
         return self::instance($namespace, self::SESS);
     }
@@ -323,11 +323,11 @@ class Cachly
     /**
      * Create cache instance
      *
-     * @param  string|null  $namespace  - if null $opt['defaultInstanceName'] - will be used
-     * @param  string|null  $adapterName  - if null $options['defaultAdapter'] will be used
+     * @param string|null $namespace - if null $opt['defaultInstanceName'] - will be used
+     * @param string|null $adapterName - if null $options['defaultAdapter'] will be used
      * @return CacheInstance
      */
-    public static function instance(string $namespace = null, string $adapterName = null): CacheInstance
+    public static function instance(?string $namespace = null, ?string $adapterName = null): CacheInstance
     {
         $adapterName = $adapterName ?: static::getOpt('defaultAdapter');
         $namespace = $namespace ?: static::getOpt('defaultInstanceName', static::DEFAULT_INSTANCE_NAME);

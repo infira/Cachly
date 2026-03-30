@@ -2,7 +2,6 @@
 
 namespace Infira\Cachly\Support;
 
-
 use Infira\Cachly\CacheInstance;
 use Symfony\Component\Cache\CacheItem;
 

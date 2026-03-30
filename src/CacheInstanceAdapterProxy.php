@@ -4,6 +4,7 @@ namespace Infira\Cachly;
 
 use Infira\Cachly\Support\Helpers;
 use Psr\Cache\CacheItemInterface;
+use Psr\Cache\InvalidArgumentException;
 use Symfony\Component\Cache\Adapter\AbstractAdapter;
 use Symfony\Contracts\Cache\CallbackInterface;
 use Symfony\Contracts\Cache\ItemInterface;
@@ -24,9 +25,10 @@ trait CacheInstanceAdapterProxy
     }
 
     /**
-     * @param  string  $key
-     * @param  mixed|null  $initialValue  - set value to CacheItem
+     * @param string $key
+     * @param mixed|null $initialValue - set value to CacheItem
      * @return CacheItem
+     * @throws InvalidArgumentException
      */
     public function getItem(string $key, mixed $initialValue = null): CacheItem
     {
@@ -54,9 +56,10 @@ trait CacheInstanceAdapterProxy
      * Alias for getItem
      *
      * @alias
-     * @param  string  $key
-     * @param  mixed|null  $initialValue
+     * @param string $key
+     * @param mixed|null $initialValue
      * @return CacheItem
+     * @throws InvalidArgumentException
      */
     public function item(string $key, mixed $initialValue = null): CacheItem
     {
@@ -87,20 +90,20 @@ trait CacheInstanceAdapterProxy
      *
      * @template T
      *
-     * @param  string  $key  The key of the item to retrieve from the cache
-     * @param  (callable(CacheItemInterface,bool):T)|CallbackInterface<T>|mixed  $value
-     * @param  float|null  $beta  A float that, as it grows, controls the likeliness of triggering
+     * @param string $key The key of the item to retrieve from the cache
+     * @param (callable(CacheItemInterface,bool):T)|CallbackInterface<T>|mixed $value
+     * @param float|null $beta A float that, as it grows, controls the likeliness of triggering
      *                              early expiration. 0 disables it, INF forces immediate expiration.
      *                              The default (or providing null) is implementation dependent but should
      *                              typically be 1.0, which should provide optimal stampede protection.
      *                              See https://en.wikipedia.org/wiki/Cache_stampede#Probabilistic_early_expiration
-     * @param  array|null  $metadata  The metadata of the cached item {@see ItemInterface::getMetadata()}
+     * @param array|null $metadata The metadata of the cached item {@see ItemInterface::getMetadata()}
      *
      * @return T
      *
      *  When $key is not valid or when $beta is negative
      */
-    public function get(string $key, mixed $value = null, float $beta = null, array &$metadata = null): mixed
+    public function get(string $key, mixed $value = null, ?float $beta = null, ?array &$metadata = null): mixed
     {
         $this->keys->register($key);
         $args = func_get_args();
@@ -135,7 +138,7 @@ trait CacheInstanceAdapterProxy
     }
 
     /**
-     * @param  string[]  $keys
+     * @param string[] $keys
      * @alias self::forget()
      *
      * @see self::forget()

@@ -103,11 +103,11 @@ class CacheItem implements ItemInterface, \ArrayAccess
     }
 
     /**
+     * @param int|string|DateTimeInterface|DateInterval|null $expires
+     * @return CacheItem
+     * @example 10 -  TTL(time to live) forwarded call CacheItem::expiresAfter()
      * @example 0|null - never expires
      * @example "+10 hours" -  will be converted to time using \new DateTime($expires) using forwarded call CacheItem::expiresAt()
-     * @example 10 -  TTL(time to live) forwarded call CacheItem::expiresAfter()
-     * @param  int|string|DateTimeInterface|DateInterval|null  $expires
-     * @return CacheItem
      */
     public function expires(int|string|DateTimeInterface|DateInterval|null $expires = null): static
     {
@@ -127,8 +127,8 @@ class CacheItem implements ItemInterface, \ArrayAccess
 
     /**
      * @template TArguments
-     * @param  class-string<TValue,TArguments>  $class
-     * @param  mixed  ...$arguments
+     * @param class-string<TValue,TArguments> $class
+     * @param mixed ...$arguments
      * @return mixed
      */
     public function pipeInto(string $class, mixed ...$arguments): mixed
@@ -136,11 +136,10 @@ class CacheItem implements ItemInterface, \ArrayAccess
         return new $class($this->get(), ...$arguments);
     }
 
-
     /**
      * Transform current item using callback
      *
-     * @param  callable(CacheItem): void  $callback
+     * @param callable(CacheItem): void $callback
      * @return static
      */
     public function transform(callable $callback): static
@@ -181,7 +180,7 @@ class CacheItem implements ItemInterface, \ArrayAccess
     /**
      * When callable is passed then uses that to set new value
      *
-     * @param  (callable(TValue): TValue)|mixed  $value
+     * @param (callable(TValue): TValue)|mixed $value
      * @return $this
      *
      */
@@ -200,7 +199,7 @@ class CacheItem implements ItemInterface, \ArrayAccess
     /**
      * Acts ass $array[] = $value
      *
-     * @param  mixed  $value
+     * @param mixed $value
      * @return $this
      *
      */

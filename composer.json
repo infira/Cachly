@@ -18,7 +18,6 @@
   "require": {
     "php": ">=8.1",
     "symfony/cache": "^v6.2",
-    "infira/errorhandler": "^2.1",
     "infira/wolo": "^1"
   }
 }

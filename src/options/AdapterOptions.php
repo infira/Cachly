@@ -2,7 +2,6 @@
 
 namespace Infira\Cachly\options;
 
-
 abstract class AdapterOptions
 {
     private array $opts;

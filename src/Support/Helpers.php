@@ -2,7 +2,6 @@
 
 namespace Infira\Cachly\Support;
 
-
 use Serializable;
 use stdClass;
 
@@ -14,7 +13,7 @@ class Helpers
     /**
      * Dump variable into printable string
      *
-     * @param  mixed  $var
+     * @param mixed $var
      * @return string
      */
     public static function dump(mixed $var): string
@@ -38,15 +37,15 @@ class Helpers
      * Basically convert any value to string
      * Use this cases use this to
      *
-     * @example md5(Hash::hashable(value)) , or hash('algo',Hash::hashable(value))
-     * @param  mixed  ...$data
+     * @param mixed ...$data
      * @return string
+     * @example md5(Hash::hashable(value)) , or hash('algo',Hash::hashable(value))
      */
 
     /**
      * Make string for hashing
      *
-     * @param  mixed  ...$keys
+     * @param mixed ...$keys
      * @return string
      */
     public static function makeKeyString(mixed ...$keys): string
@@ -56,16 +55,18 @@ class Helpers
             if ($value instanceof Serializable) {
                 $value = self::varDump($value->serialize());
             }
-            elseif (is_array($value) || $value instanceof stdClass) {
+            else if (is_array($value) || $value instanceof stdClass) {
                 $valueDump = [];
                 foreach ((array)$value as $k => $v) {
                     $valueDump[self::makeKeyString($k)] = self::makeKeyString($v);
                 }
                 $value = serialize($valueDump);
             }
-            elseif (is_scalar($value)
+            else if (
+                is_scalar($value)
                 || is_null($value)
-                || (is_object($value) && method_exists($value, '__toString'))) {
+                || (is_object($value) && method_exists($value, '__toString'))
+            ) {
                 $value = (string)$value;
             }
             $output[] = preg_replace('![\s]+!u', '', self::varDump($value));

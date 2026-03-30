@@ -4,10 +4,10 @@ namespace Infira\Cachly;
 
 use DateInterval;
 use DateTimeInterface;
-use InvalidArgumentException;
 use Infira\Cachly\Support\CacheInstanceKeyManager;
 use Infira\Cachly\Support\Collection;
 use Infira\Cachly\Support\Helpers;
+use InvalidArgumentException;
 use Symfony\Component\Cache\Adapter\AbstractAdapter;
 
 /**
@@ -40,7 +40,7 @@ class CacheInstance
     /**
      * Make sub instance
      *
-     * @param  string  $key
+     * @param string $key
      * @return $this
      */
     public function sub(string $key): static
@@ -52,11 +52,11 @@ class CacheInstance
      * Sets a cache value to be persisted later.
      * Note: use self::commit() to save
      *
-     * @example single pair set('key1', 'value1')
-     * @example set multiple key-value pair set(['key1'=> 'value1','key2' => 'value2'])
-     * @param  array<TKey,TValue>  $values
+     * @param array<TKey,TValue> $values
      * @return array<TKey,CacheItem>
      *
+     * @example single pair set('key1', 'value1')
+     * @example set multiple key-value pair set(['key1'=> 'value1','key2' => 'value2'])
      */
     public function setMany(array $values): array
     {
@@ -73,8 +73,8 @@ class CacheInstance
      * Sets a cache value to be persisted later.
      * Note: use self::commit() to save
      *
-     * @param  string  $key
-     * @param  mixed  $value  - value to store
+     * @param string $key
+     * @param mixed $value - value to store
      * @return CacheItem
      *
      */
@@ -86,9 +86,9 @@ class CacheInstance
     /**
      * Put cache value to bool and persists a cache item immediately.
      *
-     * @param  string  $key
-     * @param  mixed  $value  - value to store
-     * @param  int|string|DateTimeInterface|DateInterval|null  $expires  @see CacheItem::expires()
+     * @param string $key
+     * @param mixed $value - value to store
+     * @param int|string|DateTimeInterface|DateInterval|null $expires @see CacheItem::expires()
      * @return CacheItem
      */
     public function put(string $key, mixed $value, int|string|DateTimeInterface|DateInterval|null $expires = null): CacheItem
@@ -105,7 +105,7 @@ class CacheInstance
      * @see https://github.com/infira/Cachly#using-method-arguments-as-key
      * Note: last parameter must be callable
      *
-     * @param  TParams  ...$params  - will be used to generate hash sum ID for storing $callback result
+     * @param TParams ...$params - will be used to generate hash sum ID for storing $callback result
      * @return mixed - $callback result
      *
      */
@@ -133,8 +133,8 @@ class CacheInstance
     /**
      * Get cache item value if not exists $default will be returned
      *
-     * @param  string  $key
-     * @param  mixed  $default
+     * @param string $key
+     * @param mixed $default
      * @return mixed
      *
      */
@@ -151,8 +151,8 @@ class CacheInstance
     }
 
     /**
-     * @param  array  $keys
-     * @param  mixed|null  $default  - if default value is not set then on non-existing key will be not added
+     * @param array $keys
+     * @param mixed|null $default - if default value is not set then on non-existing key will be not added
      * @return array
      *
      */
@@ -167,7 +167,7 @@ class CacheInstance
             if (isset($this->deferredSet[$key])) {
                 $output[$key] = $this->deferredSet[$key]->get();
             }
-            elseif ($this->has($key)) {
+            else if ($this->has($key)) {
                 $output[$key] = $this->adapter->getItem($key)->get();
             }
         }
@@ -178,7 +178,7 @@ class CacheInstance
     /**
      * Does cache item exists
      *
-     * @param  string  $key
+     * @param string $key
      * @return bool
      *
      */
@@ -197,7 +197,7 @@ class CacheInstance
     /**
      * Is cache item expired
      *
-     * @param  string  $key
+     * @param string $key
      * @return bool
      *
      */
@@ -213,7 +213,7 @@ class CacheInstance
     /**
      * Delete cache item
      *
-     * @param  string|string[]|callable  $key  - $callable($cacheValue, $cacheKey):bool
+     * @param string|string[]|callable $key - $callable($cacheValue, $cacheKey):bool
      * @return bool
      *
      */
@@ -227,7 +227,7 @@ class CacheInstance
                 }
             });
         }
-        elseif (is_array($key)) {
+        else if (is_array($key)) {
             array_push($deleteKeys, ...array_values($key));
         }
         else {
@@ -251,7 +251,7 @@ class CacheInstance
     /**
      * Delete by regular expression against cache key
      *
-     * @param  string  $keyPattern
+     * @param string $keyPattern
      * @return void
      *
      */
@@ -289,7 +289,7 @@ class CacheInstance
             if (isset($this->deferredSet[$key])) {
                 $output[] = $key;
             }
-            elseif ($this->adapter->hasItem($key)) {
+            else if ($this->adapter->hasItem($key)) {
                 $output[] = $key;
             }
             else {
@@ -329,7 +329,7 @@ class CacheInstance
      * loop over all items using callable
      * Note: $callback($value, $cacheKey)
      *
-     * @param  callable<string,mixed>  $callback
+     * @param callable<string,mixed> $callback
      * @return void
      *
      */
@@ -342,7 +342,7 @@ class CacheInstance
      * Run a map over each of the items.
      * Note: $callback($value, $cacheKey)
      *
-     * @param  callable<string,mixed>  $callback
+     * @param callable<string,mixed> $callback
      * @return Collection
      *
      */
@@ -355,7 +355,7 @@ class CacheInstance
      * Filter items using callable
      * Note: $callback($value, $cacheKey)
      *
-     * @param  callable<string,mixed>  $callback
+     * @param callable<string,mixed> $callback
      * @return Collection
      *
      */
@@ -367,7 +367,7 @@ class CacheInstance
     /**
      * Filter items by regular expression against cache-key
      *
-     * @param  string  $keyPattern
+     * @param string $keyPattern
      * @return Collection
      *
      */
@@ -390,9 +390,9 @@ class CacheInstance
     /**
      * Pass values the collection into a new class.
      *
-     * @param  string  $key
-     * @param  string  $class
-     * @param  mixed  $defaultValue
+     * @param string $key
+     * @param string $class
+     * @param mixed $defaultValue
      * @return mixed
      *
      */
@@ -409,15 +409,15 @@ class CacheInstance
     //region deprecated
 
     /**
-     * @param  string  $key
-     * @param  mixed  $value
-     * @param  int|string|null  $expires
+     * @param string $key
+     * @param mixed $value
+     * @param int|string|null $expires
      * @return static
      *
      * @see self::put()
      * @deprecated
      */
-    public function putValue(string $key, mixed $value, int|string $expires = null): static
+    public function putValue(string $key, mixed $value, int|string|null $expires = null): static
     {
         $this->put(...func_get_args());
 
@@ -427,7 +427,7 @@ class CacheInstance
     /**
      * Get multiple items by keys
      *
-     * @param  array  $keys  - for examples ['key1','key2]
+     * @param array $keys - for examples ['key1','key2]
      * @return array - ['key1'=>'value1', 'key2'=>'value']
      *
      * @deprecated - use self::getValues() -> instead

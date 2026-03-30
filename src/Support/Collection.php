@@ -14,7 +14,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * Execute a callback over each item.
      *
-     * @param  callable  $callback
+     * @param callable $callback
      * @return static
      */
     public function each(callable $callback): static
@@ -36,7 +36,7 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * Run a map over each of the items.
      *
-     * @param  callable  $callback
+     * @param callable $callback
      * @return static
      */
     public function map(callable $callback): static
@@ -51,55 +51,51 @@ class Collection implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * Determine if an item exists at an offset.
      *
-     * @param  mixed  $key
+     * @param mixed $offset
      * @return bool
      */
-    #[\ReturnTypeWillChange]
-    public function offsetExists(mixed $key): bool
+    public function offsetExists(mixed $offset): bool
     {
-        return isset($this->items[$key]);
+        return isset($this->items[$offset]);
     }
 
     /**
      * Get an item at a given offset.
      *
-     * @param  string|int  $key
+     * @param string|int $key
      * @return mixed
      */
-    #[\ReturnTypeWillChange]
-    public function offsetGet($key): mixed
+    public function offsetGet(mixed $offset): mixed
     {
-        return $this->items[$key];
+        return $this->items[$offset];
     }
 
     /**
      * Set the item at a given offset.
      *
-     * @param  string|int  $key
-     * @param  mixed  $value
+     * @param string|int $key
+     * @param mixed $value
      * @return void
      */
-    #[\ReturnTypeWillChange]
-    public function offsetSet($key, mixed $value): void
+    public function offsetSet(mixed $offset, mixed $value): void
     {
-        if (is_null($key)) {
+        if (is_null($offset)) {
             $this->items[] = $value;
         }
         else {
-            $this->items[$key] = $value;
+            $this->items[$offset] = $value;
         }
     }
 
     /**
      * Unset the item at a given offset.
      *
-     * @param  string|int  $key
+     * @param string|int $key
      * @return void
      */
-    #[\ReturnTypeWillChange]
-    public function offsetUnset($key): void
+    public function offsetUnset(mixed $offset): void
     {
-        unset($this->items[$key]);
+        unset($this->items[$offset]);
     }
 
     /**

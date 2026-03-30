@@ -17,7 +17,6 @@ class SessionAdapter extends AbstractAdapter
         parent::__construct($namespace, 0);
     }
 
-
     /**
      * {@inheritdoc}
      */
